@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.14)
+project(FBXImport)
+
+set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+option(FBXIMPORT_BUILD_TEST "Build the test executable" TRUE)
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/importer)
+
+if (FBXIMPORT_BUILD_TEST)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/test)
+endif (FBXIMPORT_BUILD_TEST)
