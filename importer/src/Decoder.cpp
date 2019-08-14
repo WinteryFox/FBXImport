@@ -120,53 +120,53 @@ namespace FBX {
         element.propertyCount = readuInt();
         element.propertyLength = readuInt();
 
-        element.elementId = readString();
-        element.elementPropertiesData.resize(element.propertyCount);
+        element.id = readString();
+        element.data.resize(element.propertyCount);
 
         for (size_t i = 0; i < element.propertyCount; i++) {
             char dataType = read(1)[0];
             switch (dataType) {
                 case 'Y':
-                    element.elementPropertiesData[i] = bitcast<short>(read(2).data());
+                    element.data[i] = bitcast<short>(read(2).data());
                     break;
                 case 'C':
-                    element.elementPropertiesData[i] = bitcast<bool>(read(1).data());
+                    element.data[i] = bitcast<bool>(read(1).data());
                     break;
                 case 'I':
-                    element.elementPropertiesData[i] = bitcast<int>(read(4).data());
+                    element.data[i] = bitcast<int>(read(4).data());
                     break;
                 case 'F':
-                    element.elementPropertiesData[i] = bitcast<float>(read(4).data());
+                    element.data[i] = bitcast<float>(read(4).data());
                     break;
                 case 'D':
-                    element.elementPropertiesData[i] = bitcast<double>(read(8).data());
+                    element.data[i] = bitcast<double>(read(8).data());
                     break;
                 case 'L':
-                    element.elementPropertiesData[i] = bitcast<long long>(read(8).data());
+                    element.data[i] = bitcast<long long>(read(8).data());
                     break;
                 case 'R':
-                    element.elementPropertiesData[i] = read(readuInt());
+                    element.data[i] = read(readuInt());
                     break;
                 case 'S':
-                    element.elementPropertiesData[i] = read(readuInt());
+                    element.data[i] = read(readuInt());
                     break;
                 case 'f':
-                    element.elementPropertiesData[i] = readArray<float>(DataType::ARRAY_FLOAT32);
+                    element.data[i] = readArray<float>(DataType::ARRAY_FLOAT32);
                     break;
                 case 'i':
-                    element.elementPropertiesData[i] = readArray<int>(DataType::ARRAY_INT32);
+                    element.data[i] = readArray<int>(DataType::ARRAY_INT32);
                     break;
                 case 'd':
-                    element.elementPropertiesData[i] = readArray<float>(DataType::ARRAY_FLOAT64);
+                    element.data[i] = readArray<float>(DataType::ARRAY_FLOAT64);
                     break;
                 case 'l':
-                    element.elementPropertiesData[i] = readArray<int>(DataType::ARRAY_INT64);
+                    element.data[i] = readArray<int>(DataType::ARRAY_INT64);
                     break;
                 case 'b':
-                    element.elementPropertiesData[i] = readArray<bool>(DataType::ARRAY_BOOL);
+                    element.data[i] = readArray<bool>(DataType::ARRAY_BOOL);
                     break;
                 case 'c':
-                    element.elementPropertiesData[i] = readArray<char>(DataType::ARRAY_BYTE);
+                    element.data[i] = readArray<char>(DataType::ARRAY_BYTE);
                     break;
                 default:
                     break;

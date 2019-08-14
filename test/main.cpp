@@ -2,7 +2,7 @@
 
 int main() {
     auto decoder = FBX::Decoder("new-fox.fbx");
-    FBX::Element element = decoder.readFile();
+    auto element = decoder.readFile();
 
     return EXIT_SUCCESS;
 }
