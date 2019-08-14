@@ -1,8 +1,8 @@
-#include <Parser.h>
+#include <Decoder.h>
 
 int main() {
-    auto parser = FBX::Parser("new-fox.fbx");
-    parser.readFile();
+    auto decoder = FBX::Decoder("new-fox.fbx");
+    FBX::Element element = decoder.readFile();
 
     return EXIT_SUCCESS;
 }

@@ -1,5 +1,4 @@
-#include <any>
-#include "../include/Parser.h"
+#include "../include/Decoder.h"
 
 namespace FBX {
     const std::vector<char> FBX_HEADER = {
@@ -7,44 +6,51 @@ namespace FBX {
             '\x1a', '\x00'
     };
 
-    //const std::string_view FBX_HEADER = "Kaydara FBX Binary  \x00\x1a\x00"sv;
-
-    Parser::Parser(const std::string &path) : stream(std::ifstream(path, std::ios::binary)) {
+    Decoder::Decoder(const std::string &path) : stream(std::ifstream(path, std::ios::binary)) {
         if (!stream.is_open()) {
             std::cerr << "Failed to open file " << path << std::endl;
             return;
         }
-    }
 
-    void Parser::readFile() {
         if (read(FBX_HEADER.size()) != FBX_HEADER) {
             std::cerr << "File has incorrect header" << std::endl;
             return;
         }
 
         initVersion();
+    }
 
+    Decoder::~Decoder() {
+        stream.close();
+    }
+
+    Element Decoder::readFile() {
         std::vector<Element> elements;
         while (stream.good()) {
-            elements.push_back(readElement());
+            Element element;
+            if (!readElement(element))
+                break;
+            elements.push_back(element);
         }
-        std::cout << "yay" << std::endl;
+        Element root;
+        root.children = elements;
+        return root;
     }
 
     template<class T>
-    T Parser::bitcast(char* data) {
+    T Decoder::bitcast(char* data) {
         T result;
         std::memcpy(&result, data, sizeof(T));
         return result;
     }
 
-    std::vector<char> Parser::read(size_t length) {
+    std::vector<char> Decoder::read(size_t length) {
         std::vector<char> buffer(length, '\x00');
         stream.read(buffer.data(), length);
         return buffer;
     }
 
-    int Parser::readuInt() {
+    int Decoder::readuInt() {
         std::vector<char> buffer;
         if (isuInt32)
             buffer = read(4);
@@ -54,13 +60,13 @@ namespace FBX {
         return bitcast<int>(buffer.data());
     }
 
-    std::string Parser::readString() {
+    std::string Decoder::readString() {
         int size = read(1)[0];
         return std::string(read(size).data(), size);
     }
 
     template<class T>
-    std::vector<T> Parser::readArray(DataType type) {
+    std::vector<T> Decoder::readArray(DataType type) {
         int length = readuInt();
         int encoding = readuInt();
         int compLength = readuInt();
@@ -72,27 +78,28 @@ namespace FBX {
             infstream.zalloc = Z_NULL;
             infstream.zfree = Z_NULL;
             infstream.opaque = Z_NULL;
-            infstream.avail_in = compLength;
+            infstream.avail_in = temp.size();
             infstream.next_in = (Bytef*) temp.data();
-            infstream.avail_out = length;
+            infstream.avail_out = buffer.size();
             infstream.next_out = (Bytef*) buffer.data();
 
             inflateInit(&infstream);
             inflate(&infstream, Z_NO_FLUSH);
             inflateEnd(&infstream);
         } else {
-            buffer = std::vector(temp);
+            buffer = std::move(temp);
         }
 
-        std::vector<T> result(length / (int) type);
-        for (size_t i = 0; i < length; i += (int) type) {
+        std::vector<T> result;
+        result.reserve(buffer.size() / (int) type);
+        for (size_t i = 0; i < buffer.size(); i += (int) type) {
             result.push_back(bitcast<T>(buffer.data() + i));
         }
 
         return result;
     }
 
-    void Parser::initVersion() {
+    void Decoder::initVersion() {
         version = readuInt();
 
         if (version < 7500) {
@@ -105,64 +112,61 @@ namespace FBX {
         blockData = std::vector(blockLength, '\0');
     }
 
-    Element Parser::readElement() {
+    bool Decoder::readElement(Element &element) {
         size_t endOffset = readuInt();
         if (endOffset == 0)
-            return Element();
-
-        Element element;
+            return false;
 
         element.propertyCount = readuInt();
         element.propertyLength = readuInt();
 
         element.elementId = readString();
-        std::vector<char> elementPropertiesType(element.propertyCount);
-        std::vector<std::any> elementPropertiesData(element.propertyCount);
+        element.elementPropertiesData.resize(element.propertyCount);
 
         for (size_t i = 0; i < element.propertyCount; i++) {
             char dataType = read(1)[0];
             switch (dataType) {
                 case 'Y':
-                    elementPropertiesData[i] = bitcast<short>(read(2).data());
+                    element.elementPropertiesData[i] = bitcast<short>(read(2).data());
                     break;
                 case 'C':
-                    elementPropertiesData[i] = bitcast<bool>(read(1).data());
+                    element.elementPropertiesData[i] = bitcast<bool>(read(1).data());
                     break;
                 case 'I':
-                    elementPropertiesData[i] = bitcast<int>(read(4).data());
+                    element.elementPropertiesData[i] = bitcast<int>(read(4).data());
                     break;
                 case 'F':
-                    elementPropertiesData[i] = bitcast<float>(read(4).data());
+                    element.elementPropertiesData[i] = bitcast<float>(read(4).data());
                     break;
                 case 'D':
-                    elementPropertiesData[i] = bitcast<double>(read(8).data());
+                    element.elementPropertiesData[i] = bitcast<double>(read(8).data());
                     break;
                 case 'L':
-                    elementPropertiesData[i] = bitcast<long long>(read(8).data());
+                    element.elementPropertiesData[i] = bitcast<long long>(read(8).data());
                     break;
                 case 'R':
-                    elementPropertiesData[i] = read(readuInt());
+                    element.elementPropertiesData[i] = read(readuInt());
                     break;
                 case 'S':
-                    elementPropertiesData[i] = read(readuInt());
+                    element.elementPropertiesData[i] = read(readuInt());
                     break;
                 case 'f':
-                    elementPropertiesData[i] = readArray<float>(DataType::ARRAY_FLOAT32);
+                    element.elementPropertiesData[i] = readArray<float>(DataType::ARRAY_FLOAT32);
                     break;
                 case 'i':
-                    elementPropertiesData[i] = readArray<int>(DataType::ARRAY_INT32);
+                    element.elementPropertiesData[i] = readArray<int>(DataType::ARRAY_INT32);
                     break;
                 case 'd':
-                    elementPropertiesData[i] = readArray<float>(DataType::ARRAY_FLOAT64);
+                    element.elementPropertiesData[i] = readArray<float>(DataType::ARRAY_FLOAT64);
                     break;
                 case 'l':
-                    elementPropertiesData[i] = readArray<int>(DataType::ARRAY_INT64);
+                    element.elementPropertiesData[i] = readArray<int>(DataType::ARRAY_INT64);
                     break;
                 case 'b':
-                    elementPropertiesData[i] = readArray<bool>(DataType::ARRAY_BOOL);
+                    element.elementPropertiesData[i] = readArray<bool>(DataType::ARRAY_BOOL);
                     break;
                 case 'c':
-                    elementPropertiesData[i] = readArray<char>(DataType::ARRAY_BYTE);
+                    element.elementPropertiesData[i] = readArray<char>(DataType::ARRAY_BYTE);
                     break;
                 default:
                     break;
@@ -171,7 +175,9 @@ namespace FBX {
 
         if (stream.tellg() < endOffset) {
             while (stream.tellg() < (endOffset - blockLength)) {
-                element.children.push_back(readElement());
+                Element child;
+                readElement(child);
+                element.children.push_back(child);
             }
 
             if (read(blockLength) != blockData) {
@@ -182,6 +188,6 @@ namespace FBX {
         if (stream.tellg() < endOffset)
             throw std::runtime_error("Scope length not reached");
 
-        return element;
+        return true;
     }
 }

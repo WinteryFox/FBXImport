@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cstring>
 #include <zlib.h>
+#include <any>
 #include "../include/Element.h"
 
 namespace FBX {
@@ -18,10 +19,12 @@ namespace FBX {
         ARRAY_BYTE = 1
     };
 
-    struct Parser {
-        explicit Parser(const std::string &path);
+    struct Decoder {
+        explicit Decoder(const std::string &path);
 
-        void readFile();
+        ~Decoder();
+
+        Element readFile();
 
         int version;
 
@@ -44,7 +47,7 @@ namespace FBX {
         template<class T>
         T bitcast(char* data);
 
-        Element readElement();
+        bool readElement(Element &element);
 
         void initVersion();
     };
