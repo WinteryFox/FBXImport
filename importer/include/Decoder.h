@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <string>
 #include <fstream>
 #include <vector>
@@ -7,18 +8,12 @@
 #include <cstring>
 #include <zlib.h>
 #include <any>
-#include "../include/Element.h"
+#include "Util.h"
+#include "Element.h"
+
+#define FBX_CHUNK 256000
 
 namespace FBX {
-    enum class DataType {
-        ARRAY_FLOAT32 = 4,
-        ARRAY_INT32 = 4,
-        ARRAY_FLOAT64 = 8,
-        ARRAY_INT64 = 8,
-        ARRAY_BOOL = 1,
-        ARRAY_BYTE = 1
-    };
-
     struct Decoder {
         explicit Decoder(const std::string &path);
 
@@ -42,10 +37,7 @@ namespace FBX {
         std::string readString();
 
         template<class T>
-        std::vector<T> readArray(DataType type);
-
-        template<class T>
-        T bitcast(char* data);
+        std::vector<T> readArray();
 
         bool readElement(Element &element);
 

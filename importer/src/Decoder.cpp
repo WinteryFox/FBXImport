@@ -37,13 +37,6 @@ namespace FBX {
         return root;
     }
 
-    template<class T>
-    T Decoder::bitcast(char* data) {
-        T result;
-        std::memcpy(&result, data, sizeof(T));
-        return result;
-    }
-
     std::vector<char> Decoder::read(size_t length) {
         std::vector<char> buffer(length, '\x00');
         stream.read(buffer.data(), length);
@@ -66,37 +59,64 @@ namespace FBX {
     }
 
     template<class T>
-    std::vector<T> Decoder::readArray(DataType type) {
-        int length = readuInt();
-        int encoding = readuInt();
-        int compLength = readuInt();
+    std::vector<T> Decoder::readArray() {
+        size_t arraySize = readuInt();
+        size_t encoding = readuInt();
+        size_t completeLength = readuInt();
 
-        std::vector<char> temp = read(compLength);
-        std::vector<char> buffer(length);
+        std::vector<T> buffer;
         if (encoding == 1) {
+            std::vector<char> in(FBX_CHUNK);
+            std::vector<char> out(FBX_CHUNK);
+
             z_stream infstream;
             infstream.zalloc = Z_NULL;
             infstream.zfree = Z_NULL;
             infstream.opaque = Z_NULL;
-            infstream.avail_in = temp.size();
-            infstream.next_in = (Bytef*) temp.data();
-            infstream.avail_out = buffer.size();
-            infstream.next_out = (Bytef*) buffer.data();
+            infstream.avail_in = 0;
+            infstream.next_in = Z_NULL;
 
-            inflateInit(&infstream);
-            inflate(&infstream, Z_NO_FLUSH);
+            if (inflateInit(&infstream) != Z_OK) {
+                throw std::runtime_error("Failed to initialize inflate");
+            }
+
+            int ret;
+            size_t consumed = 0;
+            do {
+                size_t toConsume = 0;
+                if (consumed + FBX_CHUNK > completeLength)
+                    toConsume = completeLength - consumed;
+                else
+                    toConsume = FBX_CHUNK;
+
+                in = read(toConsume);
+
+                infstream.avail_in = toConsume;
+                infstream.next_in = (Bytef*) in.data();
+
+                do {
+                    infstream.avail_out = FBX_CHUNK;
+                    infstream.next_out = (Bytef*) out.data();
+
+                    ret = inflate(&infstream, Z_NO_FLUSH);
+
+                    size_t have = FBX_CHUNK - infstream.avail_out;
+                    assert(have % sizeof(T) == 0);
+                    for (size_t i = 0; i < arraySize; i++)
+                        buffer.push_back(bitcast<T>(out.data() + i * sizeof(T)));
+                } while (infstream.avail_out == 0);
+            } while (ret != Z_STREAM_END);
             inflateEnd(&infstream);
+            assert(buffer.size() == arraySize);
         } else {
-            buffer = std::move(temp);
-        }
+            std::vector<char> in = read(completeLength);
 
-        std::vector<T> result;
-        result.reserve(buffer.size() / (int) type);
-        for (size_t i = 0; i < buffer.size(); i += (int) type) {
-            result.push_back(bitcast<T>(buffer.data() + i));
+            assert(in.size() % sizeof(T) == 0);
+            for (size_t i = 0; i < arraySize; i++)
+                buffer.push_back(bitcast<T>(in.data() + i * sizeof(T)));
+            assert(buffer.size() == arraySize);
         }
-
-        return result;
+        return buffer;
     }
 
     void Decoder::initVersion() {
@@ -121,52 +141,54 @@ namespace FBX {
         element.propertyLength = readuInt();
 
         element.id = readString();
-        element.data.resize(element.propertyCount);
+        element.properties.resize(element.propertyCount);
 
         for (size_t i = 0; i < element.propertyCount; i++) {
             char dataType = read(1)[0];
             switch (dataType) {
                 case 'Y':
-                    element.data[i] = bitcast<short>(read(2).data());
+                    element.properties[i] = bitcast<uint16_t>(read(2).data());
                     break;
                 case 'C':
-                    element.data[i] = bitcast<bool>(read(1).data());
+                    element.properties[i] = bitcast<bool>(read(1).data());
                     break;
                 case 'I':
-                    element.data[i] = bitcast<int>(read(4).data());
+                    element.properties[i] = bitcast<int32_t>(read(4).data());
                     break;
                 case 'F':
-                    element.data[i] = bitcast<float>(read(4).data());
+                    element.properties[i] = bitcast<float>(read(4).data());
                     break;
                 case 'D':
-                    element.data[i] = bitcast<double>(read(8).data());
+                    element.properties[i] = bitcast<double>(read(8).data());
                     break;
                 case 'L':
-                    element.data[i] = bitcast<long long>(read(8).data());
+                    element.properties[i] = bitcast<int64_t>(read(8).data());
                     break;
                 case 'R':
-                    element.data[i] = read(readuInt());
+                    element.properties[i] = read(readuInt());
                     break;
-                case 'S':
-                    element.data[i] = read(readuInt());
+                case 'S': {
+                    auto data = read(readuInt());
+                    element.properties[i] = std::string(data.begin(), data.end());
                     break;
+                }
                 case 'f':
-                    element.data[i] = readArray<float>(DataType::ARRAY_FLOAT32);
+                    element.properties[i] = readArray<float>();
                     break;
                 case 'i':
-                    element.data[i] = readArray<int>(DataType::ARRAY_INT32);
+                    element.properties[i] = readArray<int32_t>();
                     break;
                 case 'd':
-                    element.data[i] = readArray<float>(DataType::ARRAY_FLOAT64);
+                    element.properties[i] = readArray<float>();
                     break;
                 case 'l':
-                    element.data[i] = readArray<int>(DataType::ARRAY_INT64);
+                    element.properties[i] = readArray<int64_t>();
                     break;
                 case 'b':
-                    element.data[i] = readArray<bool>(DataType::ARRAY_BOOL);
+                    element.properties[i] = readArray<bool>();
                     break;
                 case 'c':
-                    element.data[i] = readArray<char>(DataType::ARRAY_BYTE);
+                    element.properties[i] = readArray<char>();
                     break;
                 default:
                     break;
