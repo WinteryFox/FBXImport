@@ -21,11 +21,10 @@ namespace FBX {
 
         Node readFile();
 
-        const int version = 0;
-
     private:
         std::ifstream stream;
 
+        int version = 0;
         size_t blockLength = 0;
         std::vector<char> blockData;
         bool isuInt32 = true;
