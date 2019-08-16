@@ -2,10 +2,11 @@
 #include <Parser.h>
 
 int main() {
-    auto decoder = FBX::Decoder("new-fox.fbx");
-    auto element = decoder.readFile();
+    FBX::Decoder decoder("new-fox.fbx");
+    auto root = decoder.readFile();
 
-    FBX::parseMesh(element);
+    FBX::Parser parser(root);
+    auto mesh = parser.parseMesh();
 
     return EXIT_SUCCESS;
 }

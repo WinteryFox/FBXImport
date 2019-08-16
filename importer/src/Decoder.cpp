@@ -1,17 +1,16 @@
 #include "../include/Decoder.h"
 
 namespace FBX {
-    const std::vector<char> FBX_HEADER = {
-            'K', 'a', 'y', 'd', 'a', 'r', 'a', ' ', 'F', 'B', 'X', ' ', 'B', 'i', 'n', 'a', 'r', 'y', ' ', ' ', '\x00',
-            '\x1a', '\x00'
-    };
-
     Decoder::Decoder(const std::string &path) : stream(std::ifstream(path, std::ios::binary)) {
         if (!stream.is_open()) {
             std::cerr << "Failed to open file " << path << std::endl;
             return;
         }
 
+        const std::vector<char> FBX_HEADER = {
+                'K', 'a', 'y', 'd', 'a', 'r', 'a', ' ', 'F', 'B', 'X', ' ', 'B', 'i', 'n', 'a', 'r', 'y', ' ', ' ',
+                '\x00', '\x1a', '\x00'
+        };
         if (read(FBX_HEADER.size()) != FBX_HEADER) {
             std::cerr << "File has incorrect header" << std::endl;
             return;
@@ -24,16 +23,16 @@ namespace FBX {
         stream.close();
     }
 
-    Element Decoder::readFile() {
-        std::vector<Element> elements;
+    Node Decoder::readFile() {
+        std::vector<Node> nodes;
         while (stream.good()) {
-            Element element;
-            if (!readElement(element))
+            Node node;
+            if (!readNode(node))
                 break;
-            elements.push_back(element);
+            nodes.push_back(node);
         }
-        Element root;
-        root.children = elements;
+        Node root;
+        root.children = nodes;
         return root;
     }
 
@@ -66,56 +65,62 @@ namespace FBX {
 
         std::vector<T> buffer;
         if (encoding == 1) {
-            std::vector<char> in(FBX_CHUNK);
-            std::vector<char> out(FBX_CHUNK);
+            std::vector<char> data = decompress(read(completeLength));
+            assert(arraySize * sizeof(T) == data.size());
 
-            z_stream infstream;
-            infstream.zalloc = Z_NULL;
-            infstream.zfree = Z_NULL;
-            infstream.opaque = Z_NULL;
-            infstream.avail_in = 0;
-            infstream.next_in = Z_NULL;
-
-            if (inflateInit(&infstream) != Z_OK) {
-                throw std::runtime_error("Failed to initialize inflate");
-            }
-
-            int ret;
-            size_t consumed = 0;
-            do {
-                size_t toConsume = 0;
-                if (consumed + FBX_CHUNK > completeLength)
-                    toConsume = completeLength - consumed;
-                else
-                    toConsume = FBX_CHUNK;
-
-                in = read(toConsume);
-
-                infstream.avail_in = toConsume;
-                infstream.next_in = (Bytef*) in.data();
-
-                do {
-                    infstream.avail_out = FBX_CHUNK;
-                    infstream.next_out = (Bytef*) out.data();
-
-                    ret = inflate(&infstream, Z_NO_FLUSH);
-
-                    size_t have = FBX_CHUNK - infstream.avail_out;
-                    assert(have % sizeof(T) == 0);
-                    for (size_t i = 0; i < arraySize; i++)
-                        buffer.push_back(bitcast<T>(out.data() + i * sizeof(T)));
-                } while (infstream.avail_out == 0);
-            } while (ret != Z_STREAM_END);
-            inflateEnd(&infstream);
-            assert(buffer.size() == arraySize);
+            for (std::vector<char>::size_type i = 0; i < data.size(); i += sizeof(T))
+                buffer.push_back(bitcast<T>(data.data() + i));
         } else {
-            std::vector<char> in = read(completeLength);
+            std::vector<char> data = read(completeLength);
 
-            assert(in.size() % sizeof(T) == 0);
+            assert(data.size() % sizeof(T) == 0);
             for (size_t i = 0; i < arraySize; i++)
-                buffer.push_back(bitcast<T>(in.data() + i * sizeof(T)));
-            assert(buffer.size() == arraySize);
+                buffer.push_back(bitcast<T>(data.data() + i * sizeof(T)));
         }
+        assert(buffer.size() == arraySize);
+        return buffer;
+    }
+
+    std::vector<char> Decoder::decompress(const std::vector<char> &source) const {
+        std::vector<char> buffer;
+        std::vector<char> out(FBX_CHUNK);
+
+        z_stream infstream;
+        infstream.zalloc = Z_NULL;
+        infstream.zfree = Z_NULL;
+        infstream.opaque = Z_NULL;
+        infstream.avail_in = 0;
+        infstream.next_in = Z_NULL;
+
+        if (inflateInit(&infstream) != Z_OK) {
+            throw std::runtime_error("Failed to initialize inflate");
+        }
+
+        int ret;
+        size_t consumed = 0;
+        do {
+            size_t toConsume;
+            if (consumed + FBX_CHUNK > source.size())
+                toConsume = source.size() - consumed;
+            else
+                toConsume = FBX_CHUNK;
+
+            infstream.avail_in = toConsume;
+            infstream.next_in = (Bytef *) source.data() + consumed;
+            consumed += toConsume;
+
+            do {
+                infstream.avail_out = FBX_CHUNK;
+                infstream.next_out = (Bytef *) out.data();
+
+                ret = inflate(&infstream, Z_NO_FLUSH);
+
+                size_t have = FBX_CHUNK - infstream.avail_out;
+                for (size_t i = 0; i < have; i++)
+                    buffer.push_back(out[i]);
+            } while (infstream.avail_out == 0);
+        } while (ret != Z_STREAM_END);
+        inflateEnd(&infstream);
         return buffer;
     }
 
@@ -132,63 +137,63 @@ namespace FBX {
         blockData = std::vector(blockLength, '\0');
     }
 
-    bool Decoder::readElement(Element &element) {
+    bool Decoder::readNode(Node &node) {
         size_t endOffset = readuInt();
         if (endOffset == 0)
             return false;
 
-        element.propertyCount = readuInt();
-        element.propertyLength = readuInt();
+        node.propertyCount = readuInt();
+        node.propertyLength = readuInt();
 
-        element.id = readString();
-        element.properties.resize(element.propertyCount);
+        node.id = readString();
+        node.properties.resize(node.propertyCount);
 
-        for (size_t i = 0; i < element.propertyCount; i++) {
+        for (size_t i = 0; i < node.propertyCount; i++) {
             char dataType = read(1)[0];
             switch (dataType) {
                 case 'Y':
-                    element.properties[i] = bitcast<uint16_t>(read(2).data());
+                    node.properties[i] = bitcast<uint16_t>(read(2).data()); /// 16 bit int
                     break;
                 case 'C':
-                    element.properties[i] = bitcast<bool>(read(1).data());
+                    node.properties[i] = bitcast<bool>(read(1).data()); /// 1 bit bool
                     break;
                 case 'I':
-                    element.properties[i] = bitcast<int32_t>(read(4).data());
+                    node.properties[i] = bitcast<int32_t>(read(4).data()); /// 32 bit int
                     break;
                 case 'F':
-                    element.properties[i] = bitcast<float>(read(4).data());
+                    node.properties[i] = bitcast<float>(read(4).data()); /// 32 bit float
                     break;
                 case 'D':
-                    element.properties[i] = bitcast<double>(read(8).data());
+                    node.properties[i] = bitcast<double>(read(8).data()); /// 64 bit float (double)
                     break;
                 case 'L':
-                    element.properties[i] = bitcast<int64_t>(read(8).data());
+                    node.properties[i] = bitcast<int64_t>(read(8).data()); /// 64 bit int
                     break;
                 case 'R':
-                    element.properties[i] = read(readuInt());
+                    node.properties[i] = read(readuInt()); /// binary data
                     break;
                 case 'S': {
                     auto data = read(readuInt());
-                    element.properties[i] = std::string(data.begin(), data.end());
+                    node.properties[i] = std::string(data.begin(), data.end()); /// string
                     break;
                 }
                 case 'f':
-                    element.properties[i] = readArray<float>();
+                    node.properties[i] = readArray<float>(); /// array of 32 bit float
                     break;
                 case 'i':
-                    element.properties[i] = readArray<int32_t>();
+                    node.properties[i] = readArray<int32_t>(); /// array of 32 bit int
                     break;
                 case 'd':
-                    element.properties[i] = readArray<float>();
+                    node.properties[i] = readArray<double>(); /// array of 64 bit float (double)
                     break;
                 case 'l':
-                    element.properties[i] = readArray<int64_t>();
+                    node.properties[i] = readArray<int64_t>(); /// array of 64 bit int
                     break;
                 case 'b':
-                    element.properties[i] = readArray<bool>();
+                    node.properties[i] = readArray<bool>(); /// array of 1 bit boolean
                     break;
                 case 'c':
-                    element.properties[i] = readArray<char>();
+                    node.properties[i] = readArray<char>(); /// array of bytes
                     break;
                 default:
                     break;
@@ -197,9 +202,9 @@ namespace FBX {
 
         if (stream.tellg() < endOffset) {
             while (stream.tellg() < (endOffset - blockLength)) {
-                Element child;
-                readElement(child);
-                element.children.push_back(child);
+                Node child;
+                readNode(child);
+                node.children.push_back(child);
             }
 
             if (read(blockLength) != blockData) {

@@ -9,7 +9,7 @@
 #include <zlib.h>
 #include <any>
 #include "Util.h"
-#include "Element.h"
+#include "Node.h"
 
 #define FBX_CHUNK 256000
 
@@ -19,14 +19,14 @@ namespace FBX {
 
         ~Decoder();
 
-        Element readFile();
+        Node readFile();
 
-        int version;
+        const int version = 0;
 
     private:
         std::ifstream stream;
 
-        size_t blockLength;
+        size_t blockLength = 0;
         std::vector<char> blockData;
         bool isuInt32 = true;
 
@@ -39,7 +39,9 @@ namespace FBX {
         template<class T>
         std::vector<T> readArray();
 
-        bool readElement(Element &element);
+        std::vector<char> decompress(const std::vector<char> &source) const;
+
+        bool readNode(Node &node);
 
         void initVersion();
     };

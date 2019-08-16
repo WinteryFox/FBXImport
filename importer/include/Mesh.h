@@ -5,6 +5,6 @@
 
 namespace FBX {
     struct Mesh {
-        std::vector<Vector3> vertices;
+        std::vector<Vector3<double>> vertices;
     };
 }
