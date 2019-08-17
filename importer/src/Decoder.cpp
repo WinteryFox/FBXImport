@@ -107,8 +107,9 @@ namespace FBX {
                 ret = inflate(&infstream, Z_NO_FLUSH);
 
                 size_t have = FBX_CHUNK - infstream.avail_out;
-                for (size_t i = 0; i < have; i++)
-                    buffer.push_back(out[i]);
+                size_t size = buffer.size();
+                buffer.resize(buffer.size() + have);
+                std::memcpy(buffer.data() + size, out.data(), have);
             } while (infstream.avail_out == 0);
         } while (ret != Z_STREAM_END);
         inflateEnd(&infstream);

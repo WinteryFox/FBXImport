@@ -6,7 +6,7 @@
 
 namespace FBX {
     static Mesh importFile(const std::string &path) {
-        Decoder decoder("new-fox.fbx");
+        Decoder decoder(path);
         auto root = decoder.readFile();
 
         Parser parser(root);
