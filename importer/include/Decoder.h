@@ -8,6 +8,7 @@
 #include <cstring>
 #include <zlib.h>
 #include <any>
+#include <optional>
 #include "Util.h"
 #include "Node.h"
 
@@ -19,9 +20,18 @@ namespace FBX {
 
         ~Decoder();
 
+        /**
+         * Reads the entire file and returns the root
+         *
+         * @param[out] root The root node of the file
+         * @return Returns OK on success, INVALID_FILE on failure to open the file and INVALID_HEADER when the header
+         * check failed indicating that the file is not an FBX binary file
+         */
         Node readFile();
 
     private:
+        const std::string path;
+
         std::ifstream stream;
 
         int version = 0;

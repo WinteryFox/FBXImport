@@ -1,7 +1,9 @@
 #pragma once
 
+#include "Span.h"
 #include <vector>
 #include <any>
+#include <variant>
 
 namespace FBX {
     struct Node {

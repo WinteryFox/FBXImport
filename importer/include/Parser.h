@@ -13,11 +13,11 @@ namespace FBX {
     struct Parser {
         explicit Parser(const Node &root) : root(root) {}
 
-        Mesh parseMesh() const;
+        Mesh parseMesh();
 
     private:
         const Node &root;
 
-        std::optional<Node> findNode(const Node &node, const std::string &nodeId) const;
+        static std::optional<Node> findNode(const Node &node, const std::string &nodeId);
     };
 }

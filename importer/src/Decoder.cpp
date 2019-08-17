@@ -1,29 +1,26 @@
+#include <chrono>
 #include "../include/Decoder.h"
 
 namespace FBX {
-    Decoder::Decoder(const std::string &path) : stream(std::ifstream(path, std::ios::binary)) {
-        if (!stream.is_open()) {
-            std::cerr << "Failed to open file " << path << std::endl;
-            return;
-        }
-
-        const std::vector<char> FBX_HEADER = {
-                'K', 'a', 'y', 'd', 'a', 'r', 'a', ' ', 'F', 'B', 'X', ' ', 'B', 'i', 'n', 'a', 'r', 'y', ' ', ' ',
-                '\x00', '\x1a', '\x00'
-        };
-        if (read(FBX_HEADER.size()) != FBX_HEADER) {
-            std::cerr << "File has incorrect header" << std::endl;
-            return;
-        }
-
-        initVersion();
-    }
+    Decoder::Decoder(const std::string &path) : path(path), stream(std::ifstream(path, std::ios::binary)) {}
 
     Decoder::~Decoder() {
         stream.close();
     }
 
     Node Decoder::readFile() {
+        if (!stream.is_open())
+            throw std::invalid_argument("Failed to open file " + path);
+
+        const std::vector<char> FBX_HEADER = {
+                'K', 'a', 'y', 'd', 'a', 'r', 'a', ' ', 'F', 'B', 'X', ' ', 'B', 'i', 'n', 'a', 'r', 'y', ' ', ' ',
+                '\x00', '\x1a', '\x00'
+        };
+        if (read(FBX_HEADER.size()) != FBX_HEADER)
+            throw std::invalid_argument("Invalid header, file is not an FBX binary file " + path);
+
+        initVersion();
+
         std::vector<Node> nodes;
         while (stream.good()) {
             Node node;
@@ -31,8 +28,10 @@ namespace FBX {
                 break;
             nodes.push_back(node);
         }
+
         Node root;
         root.children = nodes;
+
         return root;
     }
 
@@ -174,7 +173,7 @@ namespace FBX {
                     break;
                 case 'S': {
                     auto data = read(readuInt());
-                    node.properties[i] = std::string(data.begin(), data.end()); /// string
+                    node.properties[i] = std::string_view(data.data(), data.size()); /// string
                     break;
                 }
                 case 'f':
