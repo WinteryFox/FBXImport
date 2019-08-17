@@ -62,21 +62,13 @@ namespace FBX {
         size_t encoding = readuInt();
         size_t completeLength = readuInt();
 
-        std::vector<T> buffer;
-        if (encoding == 1) {
-            std::vector<char> data = decompress(read(completeLength));
-            assert(arraySize * sizeof(T) == data.size());
+        std::vector<T> buffer(arraySize);
+        std::vector<char> data = read(completeLength);
+        if (encoding == 1)
+            data = decompress(data);
+        assert(data.size() == arraySize * sizeof(T));
+        std::memcpy(buffer.data(), data.data(), data.size());
 
-            for (std::vector<char>::size_type i = 0; i < data.size(); i += sizeof(T))
-                buffer.push_back(bitcast<T>(data.data() + i));
-        } else {
-            std::vector<char> data = read(completeLength);
-
-            assert(data.size() % sizeof(T) == 0);
-            for (size_t i = 0; i < arraySize; i++)
-                buffer.push_back(bitcast<T>(data.data() + i * sizeof(T)));
-        }
-        assert(buffer.size() == arraySize);
         return buffer;
     }
 
@@ -173,7 +165,7 @@ namespace FBX {
                     break;
                 case 'S': {
                     auto data = read(readuInt());
-                    node.properties[i] = std::string_view(data.data(), data.size()); /// string
+                    node.properties[i] = std::string(data.data(), data.size()); /// string
                     break;
                 }
                 case 'f':
@@ -189,7 +181,7 @@ namespace FBX {
                     node.properties[i] = readArray<int64_t>(); /// array of 64 bit int
                     break;
                 case 'b':
-                    node.properties[i] = readArray<bool>(); /// array of 1 bit boolean
+                    node.properties[i] = readArray<char>(); /// array of 1 bit boolean
                     break;
                 case 'c':
                     node.properties[i] = readArray<char>(); /// array of bytes
