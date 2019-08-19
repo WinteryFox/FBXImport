@@ -8,6 +8,8 @@
 
 #elif __WIN32__
 
+#include <windows.h>
+
 #endif
 
 #include <string>
@@ -18,9 +20,13 @@
 namespace FBX {
     class Stream {
         std::string path;
-        size_t fileSize;
         char *data;
         size_t cursor = 0;
+
+#ifdef __WIN32__
+        HANDLE file;
+        HANDLE map;
+#endif
 
     public:
         explicit Stream(const std::string &path);
@@ -38,7 +44,6 @@ namespace FBX {
 
         template<class T>
         Span<T> read(size_t length) {
-            assert(length % sizeof(T) == 0);
             auto span = Span<T>(reinterpret_cast<T*>(data + cursor), length);
             cursor += length;
             return span;
