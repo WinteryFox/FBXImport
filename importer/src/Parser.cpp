@@ -3,8 +3,7 @@
 namespace FBX {
     Mesh Parser::parseMesh() {
         const Node geometry = findNode(findNode(root, "Objects").value(), "Geometry").value();
-        const auto rawVertices = std::any_cast<std::vector<double>>(
-                findNode(geometry, "Vertices").value().properties[0]);
+        const auto rawVertices = std::get<std::vector<double>>(findNode(geometry, "Vertices").value().properties[0]);
 
         Mesh mesh;
         mesh.vertices.reserve(rawVertices.size() / 3);

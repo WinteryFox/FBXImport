@@ -2,23 +2,19 @@
 
 #include <cassert>
 #include <string>
-#include <fstream>
-#include <vector>
 #include <iostream>
 #include <cstring>
 #include <zlib.h>
-#include <any>
+#include <variant>
 #include <optional>
-#include "Util.h"
 #include "Node.h"
+#include "Stream.h"
 
 #define FBX_CHUNK 256000
 
 namespace FBX {
     struct Decoder {
         explicit Decoder(const std::string &path);
-
-        ~Decoder();
 
         /**
          * Reads the entire file and returns the root
@@ -32,14 +28,12 @@ namespace FBX {
     private:
         const std::string path;
 
-        std::ifstream stream;
+        Stream stream;
 
         int version = 0;
         size_t blockLength = 0;
         std::vector<char> blockData;
         bool isuInt32 = true;
-
-        std::vector<char> read(size_t length);
 
         int readuInt();
 
@@ -48,7 +42,8 @@ namespace FBX {
         template<class T>
         std::vector<T> readArray();
 
-        std::vector<char> decompress(const std::vector<char> &source) const;
+        template<class T>
+        [[nodiscard]] std::vector<T> decompress(const Span<char> &source) const;
 
         bool readNode(Node &node);
 

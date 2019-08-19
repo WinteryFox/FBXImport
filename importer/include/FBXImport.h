@@ -2,7 +2,6 @@
 #include "Parser.h"
 #include "Mesh.h"
 #include "Node.h"
-#include "Util.h"
 
 namespace FBX {
     static Mesh importFile(const std::string &path) {

@@ -1,28 +1,20 @@
-#include <chrono>
 #include "../include/Decoder.h"
 
 namespace FBX {
-    Decoder::Decoder(const std::string &path) : path(path), stream(std::ifstream(path, std::ios::binary)) {}
+    using namespace std::string_view_literals;
 
-    Decoder::~Decoder() {
-        stream.close();
-    }
+    Decoder::Decoder(const std::string &path) : path(path), stream(path) {}
 
     Node Decoder::readFile() {
-        if (!stream.is_open())
-            throw std::invalid_argument("Failed to open file " + path);
-
-        const std::vector<char> FBX_HEADER = {
-                'K', 'a', 'y', 'd', 'a', 'r', 'a', ' ', 'F', 'B', 'X', ' ', 'B', 'i', 'n', 'a', 'r', 'y', ' ', ' ',
-                '\x00', '\x1a', '\x00'
-        };
-        if (read(FBX_HEADER.size()) != FBX_HEADER)
+        auto FBX_HEADER = "Kaydara FBX Binary  \x00\x1a\x00"sv;
+        auto temp = stream.read<char>(FBX_HEADER.size());
+        if (FBX_HEADER != std::string_view(temp.begin, FBX_HEADER.size()))
             throw std::invalid_argument("Invalid header, file is not an FBX binary file " + path);
 
         initVersion();
 
         std::vector<Node> nodes;
-        while (stream.good()) {
+        while (true) {
             Node node;
             if (!readNode(node))
                 break;
@@ -35,25 +27,17 @@ namespace FBX {
         return root;
     }
 
-    std::vector<char> Decoder::read(size_t length) {
-        std::vector<char> buffer(length, '\x00');
-        stream.read(buffer.data(), length);
-        return buffer;
-    }
-
     int Decoder::readuInt() {
-        std::vector<char> buffer;
         if (isuInt32)
-            buffer = read(4);
+            return stream.read<uint32_t>();
         else
-            buffer = read(8);
-
-        return bitcast<int>(buffer.data());
+            return stream.read<uint64_t>();
     }
 
     std::string Decoder::readString() {
-        int size = read(1)[0];
-        return std::string(read(size).data(), size);
+        size_t size = stream.read<uint8_t>();
+        auto data = stream.read<char>(size);
+        return std::string(data.begin, size);
     }
 
     template<class T>
@@ -62,18 +46,22 @@ namespace FBX {
         size_t encoding = readuInt();
         size_t completeLength = readuInt();
 
-        std::vector<T> buffer(arraySize);
-        std::vector<char> data = read(completeLength);
+        std::vector<T> buffer;
         if (encoding == 1)
-            data = decompress(data);
-        assert(data.size() == arraySize * sizeof(T));
-        std::memcpy(buffer.data(), data.data(), data.size());
+            buffer = decompress<T>(stream.read<char>(completeLength));
+        else {
+            auto data = stream.read<T>(completeLength);
+            buffer.resize(arraySize);
+            std::memcpy(buffer.data(), data.begin, data.size());
+        }
+        assert(arraySize == buffer.size());
 
         return buffer;
     }
 
-    std::vector<char> Decoder::decompress(const std::vector<char> &source) const {
-        std::vector<char> buffer;
+    template<class T>
+    std::vector<T> Decoder::decompress(const Span<char> &source) const {
+        std::vector<T> buffer;
         std::vector<char> out(FBX_CHUNK);
 
         z_stream infstream;
@@ -97,7 +85,7 @@ namespace FBX {
                 toConsume = FBX_CHUNK;
 
             infstream.avail_in = toConsume;
-            infstream.next_in = (Bytef *) source.data() + consumed;
+            infstream.next_in = (Bytef *) source.begin + consumed;
             consumed += toConsume;
 
             do {
@@ -107,8 +95,8 @@ namespace FBX {
                 ret = inflate(&infstream, Z_NO_FLUSH);
 
                 size_t have = FBX_CHUNK - infstream.avail_out;
-                size_t size = buffer.size();
-                buffer.resize(buffer.size() + have);
+                size_t size = buffer.size() * sizeof(T);
+                buffer.resize(buffer.size() + have / sizeof(T));
                 std::memcpy(buffer.data() + size, out.data(), have);
             } while (infstream.avail_out == 0);
         } while (ret != Z_STREAM_END);
@@ -141,32 +129,34 @@ namespace FBX {
         node.properties.resize(node.propertyCount);
 
         for (size_t i = 0; i < node.propertyCount; i++) {
-            char dataType = read(1)[0];
+            auto dataType = stream.read<char>();
             switch (dataType) {
                 case 'Y':
-                    node.properties[i] = bitcast<uint16_t>(read(2).data()); /// 16 bit int
+                    node.properties[i] = stream.read<int16_t>(); /// 16 bit int
                     break;
                 case 'C':
-                    node.properties[i] = bitcast<bool>(read(1).data()); /// 1 bit bool
+                    node.properties[i] = stream.read<bool>(); /// 1 bit bool
                     break;
                 case 'I':
-                    node.properties[i] = bitcast<int32_t>(read(4).data()); /// 32 bit int
+                    node.properties[i] = stream.read<int32_t>(); /// 32 bit int
                     break;
                 case 'F':
-                    node.properties[i] = bitcast<float>(read(4).data()); /// 32 bit float
+                    node.properties[i] = stream.read<float>(); /// 32 bit float
                     break;
                 case 'D':
-                    node.properties[i] = bitcast<double>(read(8).data()); /// 64 bit float (double)
+                    node.properties[i] = stream.read<double>(); /// 64 bit float (double)
                     break;
                 case 'L':
-                    node.properties[i] = bitcast<int64_t>(read(8).data()); /// 64 bit int
+                    node.properties[i] = stream.read<int64_t>(); /// 64 bit int
                     break;
                 case 'R':
-                    node.properties[i] = read(readuInt()); /// binary data
+                    //node.properties[i] = stream.read<char>(readuInt()); /// binary data
+                    stream.read<char>(readuInt());
+                    // TODO
                     break;
                 case 'S': {
-                    auto data = read(readuInt());
-                    node.properties[i] = std::string(data.data(), data.size()); /// string
+                    auto data = stream.read<char>(readuInt());
+                    node.properties[i] = std::string(data.begin, data.end); /// string
                     break;
                 }
                 case 'f':
@@ -192,19 +182,18 @@ namespace FBX {
             }
         }
 
-        if (stream.tellg() < endOffset) {
-            while (stream.tellg() < (endOffset - blockLength)) {
+        if (stream.tell() < endOffset) {
+            while (stream.tell() < (endOffset - blockLength)) {
                 Node child;
                 readNode(child);
                 node.children.push_back(child);
             }
 
-            if (read(blockLength) != blockData) {
+            if (stream.read<char>(blockLength) != Span<char>(blockData.data(), blockData.size()))
                 throw std::runtime_error("Failed to read nested block");
-            }
         }
 
-        if (stream.tellg() < endOffset)
+        if (stream.tell() < endOffset)
             throw std::runtime_error("Scope length not reached");
 
         return true;
