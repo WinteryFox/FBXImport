@@ -10,13 +10,13 @@ if (WIN32)
 
     find_library(
             FBX_IMPORT_LIBRARY
-            NAMES FBXImport.dll
+            NAMES FBXImport
             PATHS
             $ENV{PROGRAMFILES}/lib)
 else ()
     find_path(
             FBX_IMPORT_INCLUDE_DIR
-            NAMES assimp/scene.h
+            NAMES FBXImport.h
             PATHS
             /usr/include
             /usr/local/include
@@ -26,7 +26,7 @@ else ()
 
     find_library(
             FBX_IMPORT_LIBRARY
-            NAMES assimp
+            NAMES FBXImport
             PATHS
             /usr/lib64
             /usr/lib
@@ -34,7 +34,6 @@ else ()
             /usr/local/lib
             /sw/lib
             /opt/local/lib
-            ${ASSIMP_ROOT_DIR}/lib
             DOC "FBXImport library")
 endif ()
 
