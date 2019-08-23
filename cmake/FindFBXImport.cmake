@@ -2,21 +2,21 @@ include(FindPackageHandleStandardArgs)
 
 if (WIN32)
     find_path(
-            FBX_IMPORT_INCLUDE_DIR
+            FBXImport_INCLUDE_DIR
             NAMES FBX/FBXImport.h
             PATHS
             "$ENV{ProgramFiles}/FBXImport/include"
             "$ENV{ProgramFiles\(x86\)}/FBXImport/include"
             DOC "FBXImport include dir")
     find_library(
-            FBX_IMPORT_LIBRARY
+            FBXImport_LIBRARY
             NAMES FBXImport
             PATHS
-            "$ENV{PROGRAMFILES}/FBXImport/lib"
+            "$ENV{ProgramFiles}/FBXImport/lib"
             "$ENV{ProgramFiles\(x86\)}/FBXImport/lib")
 else ()
     find_path(
-            FBX_IMPORT_INCLUDE_DIR
+            FBXImport_INCLUDE_DIR
             NAMES FBX/FBXImport.h
             PATHS
             "/usr/include"
@@ -25,7 +25,7 @@ else ()
             "/opt/local/include"
             DOC "FBXImport include dir")
     find_library(
-            FBX_IMPORT_LIBRARY
+            FBXImport_LIBRARY
             NAMES FBXImport
             PATHS
             "/usr/lib64"
@@ -39,9 +39,9 @@ endif ()
 
 find_package_handle_standard_args(FBXImport DEFAULT_MSG FBX_IMPORT_INCLUDE_DIR FBX_IMPORT_LIBRARY)
 
-if (FBX_IMPORT_FOUND)
-    set(FBX_IMPORT_LIBRARIES ${FBX_IMPORT_LIBRARY})
-    set(FBX_IMPORT_INCLUDE_DIRS ${FBX_IMPORT_INCLUDE_DIR})
+if (FBXImport_FOUND)
+    set(FBXImport_LIBRARIES ${FBXImport_LIBRARY})
+    set(FBXImport_INCLUDE_DIRS ${FBXImport_INCLUDE_DIR})
 endif ()
 
 mark_as_advanced(FBX_IMPORT_INCLUDE_DIR FBX_IMPORT_LIBRARY)
