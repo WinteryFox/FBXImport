@@ -1,10 +1,11 @@
 #pragma once
 
 #include <vector>
-#include "Vector3.h"
 
 namespace FBX {
     struct Mesh {
-        std::vector<Vector3<double>> vertices;
+        std::vector<double> vertices;
+        std::vector<double> normals;
+        std::vector<uint32_t> indices;
     };
 }
