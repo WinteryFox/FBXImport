@@ -30,4 +30,4 @@ install(TARGETS FBXImport
         ARCHIVE DESTINATION lib
         RUNTIME DESTINATION bin
         INCLUDES DESTINATION include)
-install(FILES ${fbx_HEADERS} DESTINATION include)
+install(FILES ${fbx_HEADERS} DESTINATION include/FBX)
