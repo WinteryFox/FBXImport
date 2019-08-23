@@ -1,4 +1,4 @@
-#include "../include/Stream.h"
+#include "../include/FBX/Stream.h"
 
 namespace FBX {
     Stream::Stream(const std::string &path) {

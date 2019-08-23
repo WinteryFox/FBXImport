@@ -1,4 +1,4 @@
-#include "../include/Decoder.h"
+#include "../include/FBX/Decoder.h"
 
 namespace FBX {
     using namespace std::string_view_literals;

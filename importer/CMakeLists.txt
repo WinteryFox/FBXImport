@@ -5,14 +5,14 @@ set(fbx_SOURCES
         src/Parser.cpp
         src/Stream.cpp)
 set(fbx_HEADERS
-        include/Decoder.h
-        include/Node.h
-        include/Parser.h
-        include/Mesh.h
-        include/FBXImport.h
-        include/Span.h
-        include/Stream.h
-        include/Scene.h)
+        include/FBX/Decoder.h
+        include/FBX/Node.h
+        include/FBX/Parser.h
+        include/FBX/Mesh.h
+        include/FBX/FBXImport.h
+        include/FBX/Span.h
+        include/FBX/Stream.h
+        include/FBX/Scene.h)
 
 add_library(FBXImport SHARED ${fbx_SOURCES})
 target_include_directories(FBXImport PUBLIC ${ZLIB_INCLUDE_DIRS})

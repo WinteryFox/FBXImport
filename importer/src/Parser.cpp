@@ -1,4 +1,4 @@
-#include "../include/Parser.h"
+#include "../include/FBX/Parser.h"
 
 namespace FBX {
     Mesh Parser::parseMesh() {
