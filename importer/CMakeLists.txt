@@ -15,7 +15,7 @@ set(fbx_HEADERS
         include/Scene.h)
 
 add_library(FBXImport SHARED ${fbx_SOURCES})
-target_include_directories(FBXImport PRIVATE ${ZLIB_INCLUDE_DIRS})
+target_include_directories(FBXImport PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_link_libraries(FBXImport ZLIB::ZLIB)
 
 set_target_properties(
@@ -23,8 +23,11 @@ set_target_properties(
         PREFIX ""
         OUTPUT_NAME "FBXImport"
 )
-set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-install(TARGETS FBXImport DESTINATION bin)
+install(TARGETS FBXImport
+        EXPORT FBXImportTarget
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include)
 install(FILES ${fbx_HEADERS} DESTINATION include)
-install(TARGETS FBXImport EXPORT FBXImport DESTINATION lib)
