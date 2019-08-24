@@ -52,9 +52,8 @@ namespace FBX {
         else {
             auto data = stream.read<T>(completeLength);
             buffer.resize(arraySize);
-            std::memcpy(buffer.data(), data.begin, data.size());
+            std::memcpy(buffer.data(), data.begin, data.size() * sizeof(T));
         }
-        assert(arraySize == buffer.size());
 
         return buffer;
     }
@@ -149,13 +148,13 @@ namespace FBX {
                 case 'L':
                     node.properties[i] = stream.read<int64_t>(); /// 64 bit int
                     break;
-                case 'R':
-                    //node.properties[i] = stream.read<char>(readuInt()); /// binary data
-                    stream.read<char>(readuInt());
-                    // TODO
+                case 'R': {
+                    const auto &data = stream.read<char>(readuInt());
+                    node.properties[i] = std::vector<char>(data.begin, data.end); /// binary data
                     break;
+                }
                 case 'S': {
-                    auto data = stream.read<char>(readuInt());
+                    const auto &data = stream.read<char>(readuInt());
                     node.properties[i] = std::string(data.begin, data.end); /// string
                     break;
                 }

@@ -37,7 +37,7 @@ else ()
             DOC "FBXImport library")
 endif ()
 
-find_package_handle_standard_args(FBXImport DEFAULT_MSG FBX_IMPORT_INCLUDE_DIR FBX_IMPORT_LIBRARY)
+find_package_handle_standard_args(FBXImport DEFAULT_MSG FBXImport_INCLUDE_DIR FBXImport_LIBRARY)
 
 if (FBXImport_FOUND)
     set(FBXImport_LIBRARIES ${FBXImport_LIBRARY})

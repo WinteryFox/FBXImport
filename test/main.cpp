@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    auto result = FBX::importFile(argv[1]);
+    auto result = FBX::importFile(argv[1], FBX::Process::TRIANGULATE);
 
     auto t2 = std::chrono::high_resolution_clock::now();
     std::cout << "Took " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()

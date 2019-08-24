@@ -1,3 +1,4 @@
+#include <chrono>
 #include "../include/FBX/Parser.h"
 
 namespace FBX {
@@ -9,22 +10,58 @@ namespace FBX {
 
         Mesh mesh{};
         mesh.vertices.reserve(fbxVertices.size() / 3);
+        for (size_t i = 0; i < fbxVertices.size(); i += 3)
+            mesh.vertices.emplace_back(fbxVertices[i], fbxVertices[i + 1], fbxVertices[i + 2]);
 
-        mesh.indices.reserve(fbxPolygons.size());
-
-        int32_t count = 0;
-        for (int index : fbxPolygons) {
-            const int absi = index < 0 ? (-index - 1) : index;
-            if (static_cast<size_t>(absi) >= fbxVertices.size())
-                throw std::runtime_error("Polygon vertex index out of range");
-
-            mesh.vertices.push_back(fbxVertices[absi]);
-            ++count;
-
+        std::vector<Face> faces;
+        Face t;
+        for (int32_t index : fbxPolygons) {
             if (index < 0) {
-                mesh.indices.push_back(count);
-                count = 0;
+                t.indices.push_back(-index - 1);
+                faces.push_back(t);
+                t = {};
+            } else {
+                t.indices.push_back(index);
             }
+        }
+
+        if (processes & Process::TRIANGULATE) {
+            /// Triangulate the mesh, currently only supports quads to triangles
+            std::vector<Face> triangles;
+            for (const auto &face : faces) {
+                /// Is this face a quad
+                if (face.indices.size() == 4) {
+                    Face face1;
+                    Face face2;
+                    face1.indices.reserve(3);
+                    face2.indices.reserve(3);
+                    if (face[0] - face[2] < face[1] - face[3]) {
+                        face1.indices.push_back(face[0]);
+                        face1.indices.push_back(face[1]);
+                        face1.indices.push_back(face[2]);
+
+                        face2.indices.push_back(face[0]);
+                        face2.indices.push_back(face[2]);
+                        face2.indices.push_back(face[3]);
+                    } else {
+                        face1.indices.push_back(face[0]);
+                        face1.indices.push_back(face[1]);
+                        face1.indices.push_back(face[3]);
+
+                        face2.indices.push_back(face[3]);
+                        face2.indices.push_back(face[1]);
+                        face2.indices.push_back(face[2]);
+                    }
+                    triangles.push_back(face1);
+                    triangles.push_back(face2);
+                } else {
+                    /// Face is not a quad, don't triangulate it
+                    triangles.push_back(face);
+                }
+            }
+            mesh.faces = triangles;
+        } else {
+            mesh.faces = faces;
         }
 
         return mesh;

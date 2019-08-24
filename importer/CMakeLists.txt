@@ -12,9 +12,12 @@ set(fbx_HEADERS
         include/FBX/FBXImport.h
         include/FBX/Span.h
         include/FBX/Stream.h
-        include/FBX/Scene.h)
+        include/FBX/Scene.h
+        include/FBX/Vector3.h
+        include/FBX/Face.h
+        include/FBX/Process.h)
 
-add_library(FBXImport SHARED ${fbx_SOURCES})
+add_library(FBXImport SHARED ${fbx_SOURCES} ${fbx_HEADERS})
 target_include_directories(FBXImport PUBLIC ${ZLIB_INCLUDE_DIRS})
 target_link_libraries(FBXImport ZLIB::ZLIB)
 
