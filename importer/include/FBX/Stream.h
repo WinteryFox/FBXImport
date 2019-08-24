@@ -26,6 +26,8 @@ namespace FBX {
 #ifdef __WIN32__
         HANDLE file;
         HANDLE map;
+#elif __unix__
+        size_t fileSize;
 #endif
 
     public:

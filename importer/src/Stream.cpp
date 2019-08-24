@@ -4,6 +4,9 @@ namespace FBX {
     Stream::Stream(const std::string &path) {
 #ifdef __unix__
         char *temp = realpath(path.c_str(), nullptr);
+        if (!temp)
+            throw std::runtime_error("Failed to open file " + path);
+
         this->path = std::string(temp);
         free(temp);
 
