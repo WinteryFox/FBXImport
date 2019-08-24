@@ -1,4 +1,3 @@
-#include <chrono>
 #include "../include/FBX/Parser.h"
 
 namespace FBX {
