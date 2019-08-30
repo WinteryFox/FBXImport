@@ -2,7 +2,7 @@
 
 namespace FBX {
     Stream::Stream(const std::string &path) {
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
         char *temp = realpath(path.c_str(), nullptr);
         if (!temp)
             throw std::runtime_error("Failed to open file " + path);
@@ -17,7 +17,7 @@ namespace FBX {
         if (file == -1)
             throw std::runtime_error("Failed to open file " + path);
 
-        data = static_cast<char *>(mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE | MAP_POPULATE, file, 0));
+        data = static_cast<char *>(mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, file, 0));
         if (data == MAP_FAILED)
             throw std::runtime_error("Failed to map file " + path);
 #elif __WIN32__
@@ -53,7 +53,7 @@ namespace FBX {
     }
 
     Stream::~Stream() {
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
         munmap(data, fileSize);
 #elif __WIN32__
         UnmapViewOfFile(data);

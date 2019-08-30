@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -23,11 +23,11 @@ namespace FBX {
         char *data;
         size_t cursor = 0;
 
-#ifdef __WIN32__
+#if defined(__unix__) || defined(__APPLE__)
+        size_t fileSize;
+#elif __WIN32__
         HANDLE file;
         HANDLE map;
-#elif __unix__
-        size_t fileSize;
 #endif
 
     public:
