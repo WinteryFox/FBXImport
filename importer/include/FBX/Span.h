@@ -21,8 +21,6 @@ namespace FBX {
         }
 
         bool operator==(const std::string_view &other) {
-            std::cout << size() << std::endl;
-            std::cout << other.size() << std::endl;
             if (other.size() != size() * sizeof(T))
                 return false;
 

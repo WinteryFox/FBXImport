@@ -37,7 +37,7 @@ namespace FBX {
     std::string Decoder::readString() {
         size_t size = stream.read<uint8_t>();
         auto data = stream.read<char>(size);
-        return std::string(data.begin, size);
+        return std::string(data.begin, data.end);
     }
 
     template<class T>

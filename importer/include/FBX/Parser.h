@@ -16,6 +16,8 @@ namespace FBX {
 
         Mesh parseMesh();
 
+        std::vector<Face> static triangulate(const std::vector<Face> &faces);
+
     private:
         const Node &root;
         int processes;

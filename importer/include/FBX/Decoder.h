@@ -7,6 +7,7 @@
 #include <zlib.h>
 #include <variant>
 #include <optional>
+#include <pthread.h>
 #include "Node.h"
 #include "Stream.h"
 
