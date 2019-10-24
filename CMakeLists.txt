@@ -10,8 +10,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(FBX_IMPORT_BUILD_TEST "Build the test executable" TRUE)
 option(FBX_BUILD_ZLIB "Build zlib" TRUE)
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/importer)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/importer)
 
 if (FBX_IMPORT_BUILD_TEST)
-    add_subdirectory(${CMAKE_SOURCE_DIR}/test)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif (FBX_IMPORT_BUILD_TEST)
