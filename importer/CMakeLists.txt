@@ -1,5 +1,3 @@
-find_package(ZLIB REQUIRED)
-
 set(fbx_SOURCES
         src/Decoder.cpp
         src/Parser.cpp
@@ -19,7 +17,14 @@ set(fbx_HEADERS
 
 add_library(FBXImport SHARED ${fbx_SOURCES} ${fbx_HEADERS})
 target_include_directories(FBXImport PUBLIC ${ZLIB_INCLUDE_DIRS})
-target_link_libraries(FBXImport ZLIB::ZLIB)
+
+if (FBX_BUILD_ZLIB)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/contrib/zlib)
+    target_link_libraries(FBXImport zlib)
+else (FBX_BUILD_ZLIB)
+    find_package(ZLIB REQUIRED)
+    target_link_libraries(FBXImport ZLIB::ZLIB)
+endif (FBX_BUILD_ZLIB)
 
 set_target_properties(
         FBXImport PROPERTIES

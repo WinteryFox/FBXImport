@@ -8,6 +8,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 option(FBX_IMPORT_BUILD_TEST "Build the test executable" TRUE)
+option(FBX_BUILD_ZLIB "Build zlib" TRUE)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/importer)
 
