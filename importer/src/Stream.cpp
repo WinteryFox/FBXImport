@@ -32,10 +32,10 @@ namespace FBX {
                 nullptr,
                 OPEN_EXISTING,
                 0,
-                nullptr);
-        if (!file) {
+                nullptr
+        );
+        if (!file)
             throw std::runtime_error("Failed to open file " + path);
-        }
 
         map = CreateFileMapping(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
         if (!map) {
