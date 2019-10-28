@@ -1,11 +1,35 @@
 #include "../include/FBX/Parser.h"
 
 namespace FBX {
-    Mesh Parser::parseMesh() {
-        const Node geometry = findNode(findNode(root, "Objects").value(), "Geometry").value();
-        const auto fbxVertices = std::get<std::vector<double>>(findNode(geometry, "Vertices").value().properties[0]);
-        const auto fbxPolygons = std::get<std::vector<int32_t>>(
-                findNode(geometry, "PolygonVertexIndex").value().properties[0]);
+    Scene Parser::parseScene() {
+        const auto objects = findNodes(root, "Objects")[0];
+        const auto meshes = findNodes(objects, "Geometry");
+
+        Scene scene = {};
+        for (const auto &mesh : meshes) {
+            if (isMesh(mesh)) {
+                const auto &m = parseMesh(mesh);
+                scene.meshes.push_back(m);
+            }
+        }
+
+        return scene;
+    }
+
+    bool Parser::isMesh(const Node &node) {
+        for (const auto &property : node.properties) {
+            try {
+                if (std::get<std::string>(property) == "Mesh")
+                    return true;
+            } catch (std::bad_variant_access &ignored) {}
+        }
+        return false;
+    }
+
+    Mesh Parser::parseMesh(const Node &node) {
+        const auto &fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
+        const auto &fbxPolygons = std::get<std::vector<int32_t>>(
+                findNodes(node, "PolygonVertexIndex")[0].properties[0]);
 
         Mesh mesh{};
         mesh.vertices.reserve(fbxVertices.size() / 3);
@@ -33,11 +57,13 @@ namespace FBX {
         return mesh;
     }
 
-    std::optional<Node> Parser::findNode(const Node &node, const std::string &nodeId) {
+    std::vector<Node> Parser::findNodes(const Node &node, const std::string &nodeId) {
+        std::vector<Node> nodes;
+
         for (const Node &e : node.children)
             if (e.id == nodeId)
-                return e;
-        return {};
+                nodes.push_back(e);
+        return nodes;
     }
 
     std::vector<Face> Parser::triangulate(const std::vector<Face> &faces) {

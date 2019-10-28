@@ -14,7 +14,11 @@ namespace FBX {
     struct Parser {
         explicit Parser(const Node &root, int processes) : root(root), processes(processes) {}
 
-        Mesh parseMesh();
+        Scene parseScene();
+
+        Mesh parseMesh(const Node &node);
+
+        static bool isMesh(const Node &node);
 
         std::vector<Face> static triangulate(const std::vector<Face> &faces);
 
@@ -22,6 +26,6 @@ namespace FBX {
         const Node &root;
         int processes;
 
-        static std::optional<Node> findNode(const Node &node, const std::string &nodeId);
+        static std::vector<Node> findNodes(const Node &node, const std::string &nodeId);
     };
 }
