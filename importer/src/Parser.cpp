@@ -27,8 +27,8 @@ namespace FBX {
     }
 
     Mesh Parser::parseMesh(const Node &node) {
-        const auto &fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
-        const auto &fbxPolygons = std::get<std::vector<int32_t>>(
+        const auto fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
+        const auto fbxPolygons = std::get<std::vector<int32_t>>(
                 findNodes(node, "PolygonVertexIndex")[0].properties[0]);
 
         Mesh mesh{};
