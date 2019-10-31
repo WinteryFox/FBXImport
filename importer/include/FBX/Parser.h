@@ -18,6 +18,9 @@ namespace FBX {
 
         Mesh parseMesh(const Node &node);
 
+        template<class T>
+        T getProperty(const Node &node, const std::string &property, const T &fallback);
+
         static bool isMesh(const Node &node);
 
         std::vector<Face> static triangulate(const std::vector<Face> &faces);

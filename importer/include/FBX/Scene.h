@@ -1,10 +1,14 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 #include "Mesh.h"
 
 namespace FBX {
     struct Scene {
-        std::vector<Mesh> meshes;
+        Scene(std::vector<Mesh> meshes, const Vector3<int> &up) : meshes(std::move(meshes)), up(up) {}
+
+        const std::vector<Mesh> meshes;
+        const Vector3<int> up;
     };
 }

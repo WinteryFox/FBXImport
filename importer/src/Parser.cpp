@@ -2,18 +2,22 @@
 
 namespace FBX {
     Scene Parser::parseScene() {
-        const auto objects = findNodes(root, "Objects")[0];
-        const auto meshes = findNodes(objects, "Geometry");
+        const auto settings = findNodes(findNodes(root, "GlobalSettings")[0], "Properties70")[0];
 
-        Scene scene = {};
-        for (const auto &mesh : meshes) {
+        int up = getProperty<int>(settings, "UpAxis", 1);
+
+        const auto objects = findNodes(root, "Objects")[0];
+        const auto geometry = findNodes(objects, "Geometry");
+
+        std::vector<Mesh> meshes;
+        for (const auto &mesh : geometry) {
             if (isMesh(mesh)) {
                 const auto &m = parseMesh(mesh);
-                scene.meshes.push_back(m);
+                meshes.push_back(m);
             }
         }
 
-        return scene;
+        return Scene(meshes, Vector3(up, up, up));
     }
 
     bool Parser::isMesh(const Node &node) {
@@ -24,6 +28,14 @@ namespace FBX {
             } catch (std::bad_variant_access &ignored) {}
         }
         return false;
+    }
+
+    template<class T>
+    T Parser::getProperty(const Node &properties, const std::string &property, const T &fallback) {
+        for (const auto &node : properties.children)
+            if (std::get<std::string>(node.properties[0]) == property)
+                return std::get<T>(node.properties[4]);
+        return fallback;
     }
 
     Mesh Parser::parseMesh(const Node &node) {

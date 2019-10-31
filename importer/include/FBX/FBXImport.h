@@ -2,6 +2,7 @@
 #include "Parser.h"
 #include "Mesh.h"
 #include "Node.h"
+#include "Vector3.h"
 
 namespace FBX {
     static Scene importFile(const std::string &path, int processes) {
