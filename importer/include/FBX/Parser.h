@@ -16,7 +16,7 @@ namespace FBX {
 
         Scene parseScene();
 
-        Mesh parseMesh(const Node &node);
+        Mesh parseMesh(const Node &node, const int32_t up);
 
         template<class T>
         T getProperty(const Node &node, const std::string &property, const T &fallback);

@@ -2,8 +2,10 @@
 
 namespace FBX {
     enum Process {
-        NONE = 0x00,
-        TRIANGULATE = 0x01,
-        GENERATE_UVS = 0x02
+        TRIANGULATE = 0x001,
+        GENERATE_UVS = 0x002,
+        MAKE_X_UP = 0x004,
+        MAKE_Y_UP = 0x008,
+        MAKE_Z_UP = 0x0010,
     };
 }

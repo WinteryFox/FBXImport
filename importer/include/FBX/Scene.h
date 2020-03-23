@@ -6,9 +6,9 @@
 
 namespace FBX {
     struct Scene {
-        Scene(std::vector<Mesh> meshes, const Vector3<int> &up) : meshes(std::move(meshes)), up(up) {}
+        Scene(std::vector<Mesh> meshes, const int32_t &up) : meshes(std::move(meshes)), up(up) {}
 
         const std::vector<Mesh> meshes;
-        const Vector3<int> up;
+        const Vector3 up;
     };
 }

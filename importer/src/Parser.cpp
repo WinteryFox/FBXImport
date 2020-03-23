@@ -4,7 +4,7 @@ namespace FBX {
     Scene Parser::parseScene() {
         const auto settings = findNodes(findNodes(root, "GlobalSettings")[0], "Properties70")[0];
 
-        int up = getProperty<int>(settings, "UpAxis", 1);
+        auto up = getProperty<int32_t>(settings, "UpAxis", 1);
 
         const auto objects = findNodes(root, "Objects")[0];
         const auto geometry = findNodes(objects, "Geometry");
@@ -12,12 +12,12 @@ namespace FBX {
         std::vector<Mesh> meshes;
         for (const auto &mesh : geometry) {
             if (isMesh(mesh)) {
-                const auto &m = parseMesh(mesh);
+                const auto &m = parseMesh(mesh, up);
                 meshes.push_back(m);
             }
         }
 
-        return Scene(meshes, Vector3(up, up, up));
+        return Scene(meshes, up);
     }
 
     bool Parser::isMesh(const Node &node) {
@@ -38,7 +38,7 @@ namespace FBX {
         return fallback;
     }
 
-    Mesh Parser::parseMesh(const Node &node) {
+    Mesh Parser::parseMesh(const Node &node, const int32_t up) {
         const auto fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
         const auto fbxPolygons = std::get<std::vector<int32_t>>(
                 findNodes(node, "PolygonVertexIndex")[0].properties[0]);
@@ -48,14 +48,16 @@ namespace FBX {
         for (size_t i = 0; i < fbxVertices.size(); i += 3)
             mesh.vertices.emplace_back(fbxVertices[i], fbxVertices[i + 1], fbxVertices[i + 2]);
 
-        Face t;
-        for (int32_t index : fbxPolygons) {
-            if (index < 0) {
-                t.indices.push_back(-index - 1);
-                mesh.faces.push_back(t);
-                t = {};
-            } else {
-                t.indices.push_back(index);
+        {
+            Face t;
+            for (int32_t index : fbxPolygons) {
+                if (index < 0) {
+                    t.indices.push_back(-index - 1);
+                    mesh.faces.push_back(t);
+                    t = {};
+                } else {
+                    t.indices.push_back(index);
+                }
             }
         }
 
@@ -65,6 +67,33 @@ namespace FBX {
         } else {
             mesh.faces = mesh.faces;
         }
+
+        std::cout << up << std::endl;
+        std::cout << mesh.vertices[0].x << ", " << mesh.vertices[0].y << ", " << mesh.vertices[0].z << std::endl;
+        for (auto &vertex : mesh.vertices) {
+            Vector3 t = vertex;
+
+            if (processes & MAKE_X_UP) {
+                if (up == 1)
+                    t = Vector3(vertex.y, vertex.x, vertex.z);
+                else if (up == 2)
+                    t = Vector3(vertex.z, vertex.y, vertex.x);
+            } else if (processes & MAKE_Y_UP) {
+                if (up == 0)
+                    t = Vector3(vertex.y, vertex.x, vertex.z);
+                else if (up == 2)
+                    t = Vector3(vertex.x, vertex.z, vertex.y);
+            } else if (processes & MAKE_Z_UP) {
+                if (up == 0)
+                    t = Vector3(vertex.z, vertex.y, vertex.x);
+                else if (up == 1)
+                    t = Vector3(vertex.x, vertex.z, vertex.y);
+            }
+
+            vertex = t;
+        }
+        std::cout << mesh.vertices[0].x << ", " << mesh.vertices[0].y << ", " << mesh.vertices[0].z << std::endl;
+        std::cout << "-----" << std::endl;
 
         return mesh;
     }
