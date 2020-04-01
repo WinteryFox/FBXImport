@@ -5,21 +5,21 @@
 #include <string>
 #include <iostream>
 #include <optional>
+#include <memory>
 #include "Node.h"
 #include "Mesh.h"
 #include "Scene.h"
 #include "Process.h"
+#include "Material.h"
+#include "Util.h"
 
 namespace FBX {
     struct Parser {
         explicit Parser(const Node &root, int processes) : root(root), processes(processes) {}
 
-        Scene parseScene();
+        [[nodiscard]] std::shared_ptr<const Scene> parseScene() const;
 
-        Mesh parseMesh(const Node &node, const int32_t up);
-
-        template<class T>
-        T getProperty(const Node &node, const std::string &property, const T &fallback);
+        [[nodiscard]] std::shared_ptr<Mesh> parseMesh(const Node &node, int32_t up) const;
 
         static bool isMesh(const Node &node);
 
@@ -28,7 +28,5 @@ namespace FBX {
     private:
         const Node &root;
         int processes;
-
-        static std::vector<Node> findNodes(const Node &node, const std::string &nodeId);
     };
 }

@@ -1,23 +1,48 @@
+#include <array>
+#include <memory>
 #include "../include/FBX/Parser.h"
 
 namespace FBX {
-    Scene Parser::parseScene() {
+    std::shared_ptr<const Scene> Parser::parseScene() const {
         const auto settings = findNodes(findNodes(root, "GlobalSettings")[0], "Properties70")[0];
 
-        auto up = getProperty<int32_t>(settings, "UpAxis", 2);
+        const auto up = getProperty<int32_t>(settings, "UpAxis", 2);
+        const auto sign = getProperty<int32_t>(settings, "UpAxisSign", 1); // TODO
 
-        const auto objects = findNodes(root, "Objects")[0];
-        const auto geometry = findNodes(objects, "Geometry");
+        const auto nodeObjects = findNodes(root, "Objects")[0];
+        const auto nodeConnections = findNodes(root, "Connections")[0];
+        const auto nodeGeometry = findNodes(nodeObjects, "Geometry");
+        const auto nodeMaterials = findNodes(nodeObjects, "Material");
+        const auto nodeTextures = findNodes(nodeObjects, "Texture");
 
-        std::vector<Mesh> meshes;
-        for (const auto &mesh : geometry) {
-            if (isMesh(mesh)) {
-                const auto &m = parseMesh(mesh, up);
-                meshes.push_back(m);
+        std::vector<std::shared_ptr<Texture>> textures{};
+        textures.reserve(nodeTextures.size());
+        for (const auto &node : nodeTextures) {
+            textures.emplace_back(new Texture(node));
+        }
+
+        std::vector<std::shared_ptr<Material>> materials{};
+        materials.reserve(nodeMaterials.size());
+        for (const auto &node : nodeMaterials) {
+            materials.emplace_back(new Material(node));
+        }
+
+        std::vector<std::shared_ptr<Mesh>> meshes;
+        for (const auto &node : nodeGeometry) {
+            if (isMesh(node)) {
+                meshes.push_back(parseMesh(node, up));
             }
         }
 
-        return Scene(meshes, up);
+        std::cout << "Mesh: " << meshes[0]->id << std::endl;
+        std::cout << "Material: " << materials[0]->id << std::endl;
+        std::cout << "Texture: " << textures[0]->id << std::endl;
+
+        for (const auto &node : nodeConnections.children)
+            std::cout << std::get<std::string>(node.properties[0]) << ": " << std::get<int64_t>(node.properties[1])
+                      << " to " << std::get<int64_t>(node.properties[2]) << std::endl;
+
+        return std::make_shared<Scene>(meshes, textures, materials, up);
     }
 
     bool Parser::isMesh(const Node &node) {
@@ -30,43 +55,17 @@ namespace FBX {
         return false;
     }
 
-    template<class T>
-    T Parser::getProperty(const Node &properties, const std::string &property, const T &fallback) {
-        for (const auto &node : properties.children)
-            if (std::get<std::string>(node.properties[0]) == property)
-                return std::get<T>(node.properties[4]);
-        return fallback;
-    }
-
-    Mesh Parser::parseMesh(const Node &node, const int32_t up) {
-        const auto fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
-        const auto fbxPolygons = std::get<std::vector<int32_t>>(
-                findNodes(node, "PolygonVertexIndex")[0].properties[0]);
-
-        Mesh mesh{};
-        mesh.vertices.reserve(fbxVertices.size() / 3);
-        for (size_t i = 0; i < fbxVertices.size(); i += 3)
-            mesh.vertices.emplace_back(fbxVertices[i], fbxVertices[i + 1], fbxVertices[i + 2]);
-
-        Face t;
-        for (int32_t index : fbxPolygons) {
-            if (index < 0) {
-                t.indices.push_back(-index - 1);
-                mesh.faces.push_back(t);
-                t = {};
-            } else {
-                t.indices.push_back(index);
-            }
-        }
+    std::shared_ptr<Mesh> Parser::parseMesh(const Node &node, const int32_t up) const {
+        std::shared_ptr<Mesh> mesh(new Mesh(node));
 
         if (processes & Process::TRIANGULATE) {
             /// Triangulate the mesh, currently only supports quads to triangles
-            mesh.faces = triangulate(mesh.faces);
+            mesh->faces = triangulate(mesh->faces);
         } else {
-            mesh.faces = mesh.faces;
+            mesh->faces = mesh->faces;
         }
 
-        for (auto &vertex : mesh.vertices) {
+        for (auto &vertex : mesh->vertices) {
             Vector3 v = vertex;
 
             if (processes & MAKE_X_UP) {
@@ -90,15 +89,6 @@ namespace FBX {
         }
 
         return mesh;
-    }
-
-    std::vector<Node> Parser::findNodes(const Node &node, const std::string &nodeId) {
-        std::vector<Node> nodes;
-
-        for (const Node &e : node.children)
-            if (e.id == nodeId)
-                nodes.push_back(e);
-        return nodes;
     }
 
     std::vector<Face> Parser::triangulate(const std::vector<Face> &faces) {

@@ -4,7 +4,7 @@
 int main(int argc, char *argv[]) {
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    auto result = FBX::importFile("fox.fbx", FBX::Process::TRIANGULATE | FBX::Process::MAKE_Y_UP);
+    auto result = FBX::importFile("Fox.fbx", FBX::Process::TRIANGULATE | FBX::Process::MAKE_Y_UP);
 
     auto t2 = std::chrono::high_resolution_clock::now();
     std::cout << "Took " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
