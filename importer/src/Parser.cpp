@@ -1,9 +1,10 @@
 #include <array>
 #include <memory>
 #include "../include/FBX/Parser.h"
+#include "../include/FBX/Model.h"
 
 namespace FBX {
-    std::shared_ptr<const Scene> Parser::parseScene() const {
+    std::unique_ptr<const Scene> Parser::parseScene() const {
         const auto settings = findNodes(findNodes(root, "GlobalSettings")[0], "Properties70")[0];
 
         const auto up = getProperty<int32_t>(settings, "UpAxis", 2);
@@ -11,38 +12,51 @@ namespace FBX {
 
         const auto nodeObjects = findNodes(root, "Objects")[0];
         const auto nodeConnections = findNodes(root, "Connections")[0];
+        const auto nodeModels = findNodes(nodeObjects, "Model");
         const auto nodeGeometry = findNodes(nodeObjects, "Geometry");
         const auto nodeMaterials = findNodes(nodeObjects, "Material");
         const auto nodeTextures = findNodes(nodeObjects, "Texture");
 
         std::vector<std::shared_ptr<Texture>> textures{};
         textures.reserve(nodeTextures.size());
-        for (const auto &node : nodeTextures) {
+        for (const auto &node : nodeTextures)
             textures.emplace_back(new Texture(node));
-        }
 
         std::vector<std::shared_ptr<Material>> materials{};
         materials.reserve(nodeMaterials.size());
-        for (const auto &node : nodeMaterials) {
+        for (const auto &node : nodeMaterials)
             materials.emplace_back(new Material(node));
-        }
 
         std::vector<std::shared_ptr<Mesh>> meshes;
-        for (const auto &node : nodeGeometry) {
-            if (isMesh(node)) {
+        for (const auto &node : nodeGeometry)
+            if (isMesh(node))
                 meshes.push_back(parseMesh(node, up));
+
+        std::vector<std::shared_ptr<Model>> models;
+        for (const auto &node : nodeModels)
+            models.emplace_back(new Model(node));
+
+        for (const auto &node : nodeConnections.children) {
+            const auto source = std::get<int64_t>(node.properties[1]);
+            const auto target = std::get<int64_t>(node.properties[2]);
+
+            for (const auto &material : materials) {
+                for (const auto &texture : textures)
+                    if (source == texture->id && target == material->id)
+                        material->texture = texture;
+
+                for (const auto &model : models)
+                    if (source == material->id && target == model->id)
+                        model->material = material;
             }
+
+            for (const auto &mesh : meshes)
+                for (const auto &model : models)
+                    if (source == mesh->id && target == model->id)
+                        model->mesh = mesh;
         }
 
-        std::cout << "Mesh: " << meshes[0]->id << std::endl;
-        std::cout << "Material: " << materials[0]->id << std::endl;
-        std::cout << "Texture: " << textures[0]->id << std::endl;
-
-        for (const auto &node : nodeConnections.children)
-            std::cout << std::get<std::string>(node.properties[0]) << ": " << std::get<int64_t>(node.properties[1])
-                      << " to " << std::get<int64_t>(node.properties[2]) << std::endl;
-
-        return std::make_shared<Scene>(meshes, textures, materials, up);
+        return std::make_unique<Scene>(models, up);
     }
 
     bool Parser::isMesh(const Node &node) {

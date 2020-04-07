@@ -10,9 +10,8 @@ namespace FBX {
     struct Mesh : public Object {
         std::vector<Vector3> vertices{};
         std::vector<Face> faces{};
-        std::shared_ptr<Material> material = nullptr;
 
-        explicit Mesh(const Node &node) : Object(0) {
+        explicit Mesh(const Node &node) : Object(std::get<int64_t>(node.properties[0])) {
             const auto fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
             const auto fbxPolygons = std::get<std::vector<int32_t>>(
                     findNodes(node, "PolygonVertexIndex")[0].properties[0]);

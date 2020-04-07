@@ -2,21 +2,14 @@
 
 #include <utility>
 #include <vector>
-#include "Mesh.h"
-#include "Texture.h"
-#include "Material.h"
+#include "Model.h"
 
 namespace FBX {
     struct Scene {
-        Scene(std::vector<std::shared_ptr<Mesh>> meshes, std::vector<std::shared_ptr<Texture>> textures,
-              std::vector<std::shared_ptr<Material>> materials, const int32_t &up) : meshes(std::move(meshes)),
-                                                                                     textures(std::move(textures)),
-                                                                                     materials(std::move(materials)),
+        Scene(std::vector<std::shared_ptr<Model>> models, const int32_t &up) : models(models),
                                                                                      up(up) {}
 
-        const std::vector<std::shared_ptr<Mesh>> meshes;
-        const std::vector<std::shared_ptr<Texture>> textures;
-        const std::vector<std::shared_ptr<Material>> materials;
+        const std::vector<std::shared_ptr<Model>> models;
         const Vector3 up;
     };
 }
