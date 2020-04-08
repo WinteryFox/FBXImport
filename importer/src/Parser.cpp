@@ -33,6 +33,7 @@ namespace FBX {
                 meshes.push_back(parseMesh(node, up));
 
         std::vector<std::shared_ptr<Model>> models;
+        models.reserve(nodeModels.size());
         for (const auto &node : nodeModels)
             models.emplace_back(new Model(node));
 
