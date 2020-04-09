@@ -77,10 +77,6 @@ namespace FBX {
             // TODO: currently only supports quads to triangles
             mesh->faces = triangulate(mesh->faces);
 
-        std::cout << mesh->faces.size() << std::endl;
-        std::cout << mesh->uvs.size() << std::endl;
-        assert(mesh->faces.size() == mesh->uvs.size());
-
         for (auto &vertex : mesh->vertices) {
             Vector3 v = vertex;
 

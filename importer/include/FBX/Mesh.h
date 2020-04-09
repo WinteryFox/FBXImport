@@ -45,10 +45,9 @@ namespace FBX {
 
             if (mappingType == "ByPolygonVertex") {
                 if (referenceType == "IndexToDirect") {
-                    assert(fbxUvIndices.size() == fbxPolygons.size());
                     assert(fbxUvIndices.size() % 2 == 0);
                     for (size_t i = 0; i < fbxUvIndices.size(); i += 2)
-                        uvs.emplace_back(fbxUvs[i], fbxUvs[i + 1]);
+                        uvs.emplace_back(fbxUvs[fbxUvIndices[i]], fbxUvs[fbxUvIndices[i + 1]]);
                 }
             } else {
                 // TODO
