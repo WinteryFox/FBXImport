@@ -76,8 +76,6 @@ namespace FBX {
         if (processes & Process::TRIANGULATE) {
             /// Triangulate the mesh, currently only supports quads to triangles
             mesh->faces = triangulate(mesh->faces);
-        } else {
-            mesh->faces = mesh->faces;
         }
 
         for (auto &vertex : mesh->vertices) {
