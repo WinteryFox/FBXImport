@@ -73,10 +73,13 @@ namespace FBX {
     std::shared_ptr<Mesh> Parser::parseMesh(const Node &node, const int32_t up) const {
         std::shared_ptr<Mesh> mesh(new Mesh(node));
 
-        if (processes & Process::TRIANGULATE) {
-            /// Triangulate the mesh, currently only supports quads to triangles
+        if (processes & Process::TRIANGULATE)
+            // TODO: currently only supports quads to triangles
             mesh->faces = triangulate(mesh->faces);
-        }
+
+        std::cout << mesh->faces.size() << std::endl;
+        std::cout << mesh->uvs.size() << std::endl;
+        assert(mesh->faces.size() == mesh->uvs.size());
 
         for (auto &vertex : mesh->vertices) {
             Vector3 v = vertex;
