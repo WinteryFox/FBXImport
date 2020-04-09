@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 #include "Vector3.h"
+#include "Vector2.h"
 #include "Face.h"
 #include "Material.h"
 
@@ -10,7 +11,7 @@ namespace FBX {
     struct Mesh : public Object {
         std::vector<Vector3> vertices{};
         std::vector<Face> faces{};
-        std::vector<Vector3> uvs{};
+        std::vector<Vector2> uvs{};
 
         explicit Mesh(const Node &node) : Object(std::get<int64_t>(node.properties[0])) {
             const auto fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
@@ -35,9 +36,9 @@ namespace FBX {
                 }
             }
 
-            uvs.reserve(fbxUvs.size() / 3);
-            for (size_t i = 0; i < fbxUvs.size(); i += 3)
-                uvs.emplace_back(fbxUvs[i], fbxUvs[i + 1], fbxUvs[i + 2]);
+            uvs.reserve(fbxUvs.size() / 2);
+            for (size_t i = 0; i < fbxUvs.size(); i += 2)
+                uvs.emplace_back(fbxUvs[i], fbxUvs[i + 1]);
         }
     };
 }
