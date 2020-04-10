@@ -47,7 +47,7 @@ namespace FBX {
                 if (referenceType == "IndexToDirect") {
                     assert(fbxUvIndices.size() % 2 == 0);
                     for (size_t i = 0; i < fbxUvIndices.size(); i += 2)
-                        uvs.emplace_back(fbxUvs[fbxUvIndices[i] * 2], fbxUvs[fbxUvIndices[i + 1] * 2]);
+                        uvs.emplace_back(fbxUvs[fbxUvIndices[i]], fbxUvs[fbxUvIndices[i + 1]]);
                 }
             } else {
                 // TODO
