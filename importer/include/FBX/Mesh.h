@@ -27,7 +27,7 @@ namespace FBX {
             Face t;
             for (int32_t index : fbxPolygons) {
                 if (index < 0) {
-                    t.indices.push_back(-index - 1);
+                    t.indices.push_back(~index);
                     faces.push_back(t);
                     t = {};
                 } else {
@@ -47,11 +47,14 @@ namespace FBX {
                 if (referenceType == "IndexToDirect") {
                     assert(fbxUvIndices.size() % 2 == 0);
                     for (size_t i = 0; i < fbxUvIndices.size(); i += 2)
-                        uvs.emplace_back(fbxUvs[fbxUvIndices[i]], fbxUvs[fbxUvIndices[i + 1]]);
+                        uvs.emplace_back(fbxUvs[fbxUvIndices[i] * 2], fbxUvs[fbxUvIndices[i + 1] * 2]);
                 }
             } else {
                 // TODO
             }
+
+            std::cout << vertices.size() << std::endl;
+            std::cout << uvs.size() << std::endl;
         }
     };
 }
