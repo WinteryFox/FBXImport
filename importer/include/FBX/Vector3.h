@@ -11,5 +11,9 @@ namespace FBX {
         Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
 
         explicit Vector3(float init) : x(init), y(init), z(init) {}
+
+        bool operator==(const Vector3 &other) {
+            return other.x == x && other.y == y && other.z == z;
+        }
     };
 }

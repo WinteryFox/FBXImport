@@ -1,38 +1,43 @@
 #pragma once
 
-#include <utility>
 #include <vector>
 #include "Vector3.h"
 #include "Vector2.h"
 #include "Face.h"
-#include "Material.h"
+#include "Object.h"
+#include "Util.h"
 
 namespace FBX {
     struct Mesh : public Object {
         std::vector<Vector3> vertices{};
+        uint32_t indexCount = 0;
         std::vector<Face> faces{};
         std::vector<Vector2> uvs{};
 
         explicit Mesh(const Node &node) : Object(std::get<int64_t>(node.properties[0])) {
             const auto fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
-
-            vertices.reserve(fbxVertices.size() / 3);
-            for (size_t i = 0; i < fbxVertices.size(); i += 3)
-                vertices.emplace_back(fbxVertices[i], fbxVertices[i + 1], fbxVertices[i + 2]);
-
-
-            const auto fbxPolygons = std::get<std::vector<int32_t>>(
+            const auto fbxIndices = std::get<std::vector<int32_t>>(
                     findNodes(node, "PolygonVertexIndex")[0].properties[0]);
 
-            Face t;
-            for (int32_t index : fbxPolygons) {
+            Face face{};
+            for (const auto &i : fbxIndices) {
+                int32_t index = i;
                 if (index < 0) {
-                    t.indices.push_back(~index);
-                    faces.push_back(t);
-                    t = {};
+                    index = ~index;
+                    face.indices.push_back(indexCount);
+                    faces.push_back(face);
+                    face = {};
                 } else {
-                    t.indices.push_back(index);
+                    face.indices.push_back(indexCount);
                 }
+
+                vertices.emplace_back(
+                        fbxVertices[index * 3],
+                        fbxVertices[index * 3 + 1],
+                        fbxVertices[index * 3 + 2]
+                );
+
+                indexCount++;
             }
 
             const auto fbxUvNode = findNodes(node, "LayerElementUV")[0];
@@ -41,20 +46,20 @@ namespace FBX {
             const auto referenceType = std::get<std::string>(
                     findNodes(fbxUvNode, "ReferenceInformationType")[0].properties[0]);
             const auto fbxUvs = std::get<std::vector<double>>(findNodes(fbxUvNode, "UV")[0].properties[0]);
-            const auto fbxUvIndices = std::get<std::vector<int32_t>>(findNodes(fbxUvNode, "UVIndex")[0].properties[0]);
 
             if (mappingType == "ByPolygonVertex") {
                 if (referenceType == "IndexToDirect") {
+                    const auto fbxUvIndices = std::get<std::vector<int32_t>>(
+                            findNodes(fbxUvNode, "UVIndex")[0].properties[0]);
                     assert(fbxUvIndices.size() % 2 == 0);
-                    for (size_t i = 0; i < fbxUvIndices.size(); i += 2)
-                        uvs.emplace_back(fbxUvs[fbxUvIndices[i]], fbxUvs[fbxUvIndices[i + 1]]);
+
+                    uvs.reserve(fbxUvIndices.size());
+                    for (const auto &index : fbxUvIndices)
+                        uvs.emplace_back(fbxUvs[index * 2], 1.0f - fbxUvs[index * 2 + 1]);
                 }
             } else {
                 // TODO
             }
-
-            std::cout << vertices.size() << std::endl;
-            std::cout << uvs.size() << std::endl;
         }
     };
 }

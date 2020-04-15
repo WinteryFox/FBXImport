@@ -2,6 +2,7 @@
 
 #include "Object.h"
 #include "Node.h"
+#include "Material.h"
 
 namespace FBX {
     struct Model : public Object {
