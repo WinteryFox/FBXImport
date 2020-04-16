@@ -1,7 +1,4 @@
-#include <array>
-#include <memory>
 #include "../include/FBX/Parser.h"
-#include "../include/FBX/Model.h"
 
 namespace FBX {
     std::unique_ptr<const Scene> Parser::parseScene() const {
