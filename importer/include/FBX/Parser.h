@@ -6,6 +6,7 @@
 #include <iostream>
 #include <optional>
 #include <memory>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include "Node.h"
 #include "Mesh.h"
