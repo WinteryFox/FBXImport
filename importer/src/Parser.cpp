@@ -75,7 +75,7 @@ namespace FBX {
 
         if (processes & Process::TRIANGULATE)
             // TODO: currently only supports quads to triangles
-            mesh->faces = triangulate(mesh->faces);
+            triangulate(mesh);
 
         for (auto &vertex : mesh->vertices) {
             Vector3 v = vertex;
@@ -103,41 +103,50 @@ namespace FBX {
         return mesh;
     }
 
-    std::vector<Face> Parser::triangulate(const std::vector<Face> &faces) {
-        std::vector<Face> triangles;
+    void Parser::triangulate(const std::shared_ptr<Mesh> &mesh) {
+        std::vector<Face> faces;
 
-        for (const auto &face : faces) {
+        for (const auto &face : mesh->faces) {
             /// Is this face a quad
             if (face.indices.size() == 4) {
                 Face face1;
                 Face face2;
                 face1.indices.reserve(3);
                 face2.indices.reserve(3);
-                if (face[0] - face[2] < face[1] - face[3]) {
-                    face1.indices.push_back(face[0]);
-                    face1.indices.push_back(face[1]);
-                    face1.indices.push_back(face[2]);
 
-                    face2.indices.push_back(face[0]);
-                    face2.indices.push_back(face[2]);
-                    face2.indices.push_back(face[3]);
-                } else {
-                    face1.indices.push_back(face[0]);
-                    face1.indices.push_back(face[1]);
-                    face1.indices.push_back(face[3]);
+                uint32_t startVertex = 0;
+                for (uint32_t i = 0; i < 4; i++) {
+                    const auto &v0 = mesh->vertices[face[(i + 3) % 4]];
+                    const auto &v1 = mesh->vertices[face[(i + 2) % 4]];
+                    const auto &v2 = mesh->vertices[face[(i + 1) % 4]];
+                    const auto &v = mesh->vertices[face[i]];
 
-                    face2.indices.push_back(face[3]);
-                    face2.indices.push_back(face[1]);
-                    face2.indices.push_back(face[2]);
+                    const auto left = v0 - v;
+                    const auto diag = v1 - v;
+                    const auto right = v2 - v;
+
+                    const float angle = std::acos((left * diag).x) + std::acos((right * diag).x);
+                    if (angle > M_PI) {
+                        startVertex = i;
+                        break;
+                    }
                 }
-                triangles.push_back(face1);
-                triangles.push_back(face2);
+
+                face1.indices.push_back(face[startVertex]);
+                face1.indices.push_back(face[(startVertex + 1) % 4]);
+                face1.indices.push_back(face[(startVertex + 2) % 4]);
+
+                face2.indices.push_back(face[startVertex]);
+                face2.indices.push_back(face[(startVertex + 2) % 4]);
+                face2.indices.push_back(face[(startVertex + 3) % 4]);
+
+                faces.push_back(face1);
+                faces.push_back(face2);
             } else {
-                /// Face is not a quad, don't triangulate it
-                triangles.push_back(face);
+                // TODO
             }
         }
 
-        return triangles;
+        mesh->faces = faces;
     }
 }

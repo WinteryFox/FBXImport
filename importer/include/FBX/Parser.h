@@ -6,6 +6,7 @@
 #include <iostream>
 #include <optional>
 #include <memory>
+#include <cmath>
 #include "Node.h"
 #include "Mesh.h"
 #include "Scene.h"
@@ -24,7 +25,7 @@ namespace FBX {
 
         static bool isMesh(const Node &node);
 
-        std::vector<Face> static triangulate(const std::vector<Face> &faces);
+        static void triangulate(const std::shared_ptr<Mesh> &mesh);
 
     private:
         const Node &root;

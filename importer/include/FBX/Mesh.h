@@ -10,7 +10,6 @@
 namespace FBX {
     struct Mesh : public Object {
         std::vector<Vector3> vertices{};
-        uint32_t indexCount = 0;
         std::vector<Face> faces{};
         std::vector<Vector2> uvs{};
 
@@ -19,16 +18,18 @@ namespace FBX {
             const auto fbxIndices = std::get<std::vector<int32_t>>(
                     findNodes(node, "PolygonVertexIndex")[0].properties[0]);
 
+            uint32_t indexCount = 0;
             Face face{};
+            vertices.reserve(fbxIndices.size());
             for (const auto &i : fbxIndices) {
                 int32_t index = i;
                 if (index < 0) {
                     index = ~index;
-                    face.indices.push_back(indexCount);
+                    face.indices.push_back(indexCount++);
                     faces.push_back(face);
                     face = {};
                 } else {
-                    face.indices.push_back(indexCount);
+                    face.indices.push_back(indexCount++);
                 }
 
                 vertices.emplace_back(
@@ -36,8 +37,6 @@ namespace FBX {
                         fbxVertices[index * 3 + 1],
                         fbxVertices[index * 3 + 2]
                 );
-
-                indexCount++;
             }
 
             const auto fbxUvNode = findNodes(node, "LayerElementUV")[0];
