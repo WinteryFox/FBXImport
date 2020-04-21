@@ -39,26 +39,9 @@ namespace FBX {
                 );
             }
 
-            const auto fbxUvNode = findNodes(node, "LayerElementUV")[0];
-            const auto mappingType = std::get<std::string>(
-                    findNodes(fbxUvNode, "MappingInformationType")[0].properties[0]);
-            const auto referenceType = std::get<std::string>(
-                    findNodes(fbxUvNode, "ReferenceInformationType")[0].properties[0]);
-            const auto fbxUvs = std::get<std::vector<double>>(findNodes(fbxUvNode, "UV")[0].properties[0]);
-
-            if (mappingType == "ByPolygonVertex") {
-                if (referenceType == "IndexToDirect") {
-                    const auto fbxUvIndices = std::get<std::vector<int32_t>>(
-                            findNodes(fbxUvNode, "UVIndex")[0].properties[0]);
-                    assert(fbxUvIndices.size() % 2 == 0);
-
-                    uvs.reserve(fbxUvIndices.size());
-                    for (const auto &index : fbxUvIndices)
-                        uvs.emplace_back(fbxUvs[index * 2], 1.0f - fbxUvs[index * 2 + 1]);
-                }
-            } else {
-                // TODO
-            }
+            const auto &uvLayer = findNodes(node, "LayerElementUV");
+            if (!uvLayer.empty())
+                uvs = readLayer<Vector2, 2>(uvLayer[0], "UV");
         }
     };
 }

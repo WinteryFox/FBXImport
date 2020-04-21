@@ -71,7 +71,6 @@ namespace FBX {
         std::shared_ptr<Mesh> mesh(new Mesh(node));
 
         if (processes & Process::TRIANGULATE)
-            // TODO: currently only supports quads to triangles
             triangulate(mesh);
 
         for (auto &vertex : mesh->vertices) {
@@ -104,13 +103,9 @@ namespace FBX {
         std::vector<Face> faces;
 
         for (const auto &face : mesh->faces) {
-            /// Is this face a quad
-            if (face.indices.size() == 4) {
-                Face face1;
-                Face face2;
-                face1.indices.reserve(3);
-                face2.indices.reserve(3);
-
+            if (face.indices.size() <= 3) {
+                faces.push_back(face);
+            } else if (face.indices.size() == 4) {
                 uint32_t startVertex = 0;
                 for (uint32_t i = 0; i < 4; i++) {
                     const auto &v0 = mesh->vertices[face[(i + 3) % 4]];
@@ -122,25 +117,38 @@ namespace FBX {
                     const auto diag = v1 - v;
                     const auto right = v2 - v;
 
-                    const float angle = std::acos((left * diag).x) + std::acos((right * diag).x);
+                    const float angle = std::acos(left * diag) + std::acos(right * diag);
                     if (angle > M_PI) {
                         startVertex = i;
                         break;
                     }
                 }
 
-                face1.indices.push_back(face[startVertex]);
-                face1.indices.push_back(face[(startVertex + 1) % 4]);
-                face1.indices.push_back(face[(startVertex + 2) % 4]);
-
-                face2.indices.push_back(face[startVertex]);
-                face2.indices.push_back(face[(startVertex + 2) % 4]);
-                face2.indices.push_back(face[(startVertex + 3) % 4]);
-
-                faces.push_back(face1);
-                faces.push_back(face2);
+                faces.emplace_back(
+                        std::vector<uint32_t>{
+                                face[startVertex],
+                                face[(startVertex + 1) % 4],
+                                face[(startVertex + 2) % 4]
+                        }
+                );
+                faces.emplace_back(
+                        std::vector<uint32_t>{
+                                face[startVertex],
+                                face[(startVertex + 2) % 4],
+                                face[(startVertex + 3) % 4]
+                        }
+                );
             } else {
-                // TODO
+                std::vector<Vector3> vertices;
+                vertices.reserve(face.indices.size());
+                for (const auto i : face.indices)
+                    vertices.push_back(mesh->vertices[i]);
+
+                const auto &left = vertices[0];
+                uint32_t index = 0;
+                for (uint32_t i = 0; i < face.indices.size(); i++) {
+                    //if (vertices[i].x < left.x )
+                }
             }
         }
 
