@@ -22,8 +22,32 @@ namespace FBX {
     }
 
     template<class T, uint8_t stride>
+    std::vector<T> make_vector();
+
+    template<>
+    std::vector<Vector2> make_vector<Vector2, 2>() { return std::vector<Vector2>(); }
+
+    template<>
+    std::vector<Vector3> make_vector<Vector3, 3>() { return std::vector<Vector3>(); }
+
+    template<class T, uint8_t stride>
+    void fill_vector(const std::vector<double> &data, int32_t idx, std::vector<T> &result);
+
+    template<>
+    void fill_vector<Vector2, 2>(const std::vector<double> &data, int32_t index, std::vector<Vector2> &result) {
+        auto stride = 2;
+        result.emplace_back(data[index * stride], data[index * stride + 1]);
+    }
+
+    template<>
+    void fill_vector<Vector3, 3>(const std::vector<double> &data, int32_t index, std::vector<Vector3> &result) {
+        auto stride = 3;
+        result.emplace_back(data[index * stride], data[index * stride + 1], data[index * stride + 2]);
+    }
+
+    template<class T, uint8_t stride>
     static std::vector<T> readLayer(const Node &layer, const std::string &name) {
-        std::vector<T> result;
+        auto result = make_vector<T, stride>();
 
         const auto &mappingType = std::get<std::string>(
                 findNodes(layer, "MappingInformationType")[0].properties[0]);
@@ -38,10 +62,7 @@ namespace FBX {
 
                 result.reserve(indices.size());
                 for (const auto &index : indices)
-                    if (stride == 2)
-                        result.emplace_back(data[index * stride], data[index * stride + 1]);
-                    else if (stride == 3)
-                        result.emplace_back(data[index * stride], data[index * stride + 1], data[index * stride + 2]);
+                    fill_vector<T, stride>(data, index, result);
             } else if (referenceType == "Direct") {
                 // TODO
             }
