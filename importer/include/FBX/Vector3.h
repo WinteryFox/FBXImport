@@ -13,15 +13,15 @@ namespace FBX {
         explicit Vector3(float init) : x(init), y(init), z(init) {}
 
         bool operator==(const Vector3 &other) const {
-            return other.x == x && other.y == y && other.z == z;
+            return x == other.x && y == other.y && z == other.z;
         }
 
         Vector3 operator-(const Vector3 &other) const {
             return Vector3(x - other.x, y - other.y, z - other.z);
         }
 
-        Vector3 operator*(const Vector3 &other) const {
-            return Vector3(x * other.x, y * other.y, z * other.z);
+        float operator*(const Vector3 &other) const {
+            return x * other.x + y * other.y + z * other.z;
         }
     };
 }
