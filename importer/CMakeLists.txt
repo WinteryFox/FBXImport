@@ -16,13 +16,14 @@ set(fbx_HEADERS
         include/FBX/Process.h include/FBX/Texture.h include/FBX/Material.h include/FBX/Util.h include/FBX/Object.h include/FBX/Model.h include/FBX/Vector2.h)
 
 add_library(FBXImport SHARED ${fbx_SOURCES} ${fbx_HEADERS})
-target_include_directories(FBXImport PUBLIC ${ZLIB_INCLUDE_DIRS})
 
 if (FBX_BUILD_ZLIB)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/contrib/zlib)
+    target_include_directories(FBXImport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/zlib)
     target_link_libraries(FBXImport zlib)
 else (FBX_BUILD_ZLIB)
     find_package(ZLIB REQUIRED)
+    target_include_directories(FBXImport PUBLIC ${ZLIB_INCLUDE_DIRS})
     target_link_libraries(FBXImport ZLIB::ZLIB)
 endif (FBX_BUILD_ZLIB)
 

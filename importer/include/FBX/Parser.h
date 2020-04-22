@@ -26,6 +26,10 @@ namespace FBX {
 
         static bool isMesh(const Node &node);
 
+        static bool isCounterClockwise(const Vector2 &a, const Vector2 &b, const Vector2 &c);
+
+        static bool isInTriangle(const Vector2 &point, const Vector2 &a, const Vector2 &b, const Vector2 &c);
+
         static void triangulate(const std::shared_ptr<Mesh> &mesh);
 
     private:

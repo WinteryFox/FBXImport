@@ -12,6 +12,7 @@ namespace FBX {
         std::vector<Vector3> vertices{};
         std::vector<Face> faces{};
         std::vector<Vector2> uvs{};
+        std::vector<Vector3> normals{};
 
         explicit Mesh(const Node &node) : Object(std::get<int64_t>(node.properties[0])) {
             const auto fbxVertices = std::get<std::vector<double>>(findNodes(node, "Vertices")[0].properties[0]);
@@ -42,6 +43,15 @@ namespace FBX {
             const auto &uvLayer = findNodes(node, "LayerElementUV");
             if (!uvLayer.empty())
                 uvs = readLayer<Vector2, 2>(uvLayer[0], "UV");
+
+            const auto &normalLayer = findNodes(node, "LayerElementNormal");
+            if (!normalLayer.empty())
+                normals = readLayer<Vector3, 3>(normalLayer[0], "Normals");
+
+            std::cout << "Vertices: " << vertices.size() << std::endl;
+            std::cout << "Faces: " << faces.size() << std::endl;
+            std::cout << "UVs: " << uvs.size() << std::endl;
+            std::cout << "Normals: " << normals.size() << std::endl;
         }
     };
 }

@@ -1,3 +1,5 @@
+#include <cmath>
+
 #pragma once
 
 namespace FBX {
@@ -12,6 +14,17 @@ namespace FBX {
 
         explicit Vector3(float init) : x(init), y(init), z(init) {}
 
+        float operator[](uint8_t index) const {
+            if (index == 0)
+                return x;
+            else if (index == 1)
+                return y;
+            else if (index == 2)
+                return z;
+            else
+                throw std::runtime_error("Access out of bounds");
+        }
+
         bool operator==(const Vector3 &other) const {
             return x == other.x && y == other.y && z == other.z;
         }
@@ -20,8 +33,21 @@ namespace FBX {
             return Vector3(x - other.x, y - other.y, z - other.z);
         }
 
+        void operator-=(const Vector3 &other) {
+            x -= other.x;
+            y -= other.y;
+            z -= other.z;
+        }
+
         float operator*(const Vector3 &other) const {
             return x * other.x + y * other.y + z * other.z;
+        }
+
+        void normalize() {
+            const float length = std::sqrt((x * x) + (y * y) + (z * z));
+            x /= length;
+            y /= length;
+            z /= length;
         }
     };
 }
