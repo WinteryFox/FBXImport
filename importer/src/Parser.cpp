@@ -109,7 +109,7 @@ namespace FBX {
 
         for (auto &face : mesh->faces) {
             if (face.indices.size() <= 3) {
-                faces.push_back(face);
+                //faces.push_back(face);
             } else if (face.indices.size() == 4) {
                 uint32_t startVertex = 0;
                 for (uint32_t i = 0; i < 4; i++) {
@@ -129,7 +129,7 @@ namespace FBX {
                     }
                 }
 
-                faces.emplace_back(
+                /*faces.emplace_back(
                         std::vector<uint32_t>{
                                 face[startVertex],
                                 face[(startVertex + 1) % 4],
@@ -142,7 +142,7 @@ namespace FBX {
                                 face[(startVertex + 2) % 4],
                                 face[(startVertex + 3) % 4]
                         }
-                );
+                );*/
             } else {
                 std::vector<Vector3> vertices;
                 vertices.reserve(face.indices.size());
@@ -200,9 +200,9 @@ namespace FBX {
 
                 uint32_t vertexCount = vertices2D.size();
                 std::vector<uint32_t> reflex;
-                uint32_t earTip = -1;
+                int32_t earTip = -1;
                 while (vertexCount >= 3) {
-                    for (uint32_t i = 0; i < vertices2D.size() - 1; i++) {
+                    for (int32_t i = 0; i < vertices2D.size() - 1; i++) {
                         if (earTip >= 0)
                             break;
 
@@ -231,7 +231,7 @@ namespace FBX {
                                 if (face[j] == tri[0] || face[j] == tri[2])
                                     continue;
 
-                                if (isInTriangle(vertices2D[face[j]], vertices2D[tri[0]], vertices2D[tri[1]],
+                                if (isInTriangle(vertices2D[j], vertices2D[tri[0]], vertices2D[tri[1]],
                                                  vertices2D[tri[2]])) {
                                     ear = false;
                                     break;
@@ -250,7 +250,7 @@ namespace FBX {
                     uint32_t next = earTip + 1 < vertexCount ? earTip + 1 : 0;
                     faces.emplace_back(
                             std::vector<uint32_t>{
-                                    prev, earTip, next
+                                    prev, static_cast<uint32_t>(earTip), next
                             }
                     );
                     std::erase(face.indices, earTip);
