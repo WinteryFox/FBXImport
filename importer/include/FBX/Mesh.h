@@ -39,7 +39,6 @@ namespace FBX {
                         fbxVertices[index * 3 + 2]
                 );
             }
-            std::cout << "before: " << indexCount << std::endl;
 
             const auto &uvLayer = findNodes(node, "LayerElementUV");
             if (!uvLayer.empty())
