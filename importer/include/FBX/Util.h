@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FBX_UTIL_H
+#define FBX_UTIL_H
 
 #include <vector>
 #include "Node.h"
@@ -79,3 +80,5 @@ namespace FBX {
         return res;
     }
 }
+
+#endif
