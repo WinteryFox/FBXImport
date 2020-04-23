@@ -47,11 +47,6 @@ namespace FBX {
             const auto &normalLayer = findNodes(node, "LayerElementNormal");
             if (!normalLayer.empty())
                 normals = readLayer<Vector3, 3>(normalLayer[0], "Normals");
-
-            std::cout << "Vertices: " << vertices.size() << std::endl;
-            std::cout << "Faces: " << faces.size() << std::endl;
-            std::cout << "UVs: " << uvs.size() << std::endl;
-            std::cout << "Normals: " << normals.size() << std::endl;
         }
     };
 }
