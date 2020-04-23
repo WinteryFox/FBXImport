@@ -2,10 +2,7 @@
 
 namespace FBX {
     std::unique_ptr<const Scene> Parser::parseScene() const {
-        const auto settings = findNodes(findNodes(root, "GlobalSettings")[0], "Properties70")[0];
-
-        const auto up = getProperty<int32_t>(settings, "UpAxis", 2);
-        const auto sign = getProperty<int32_t>(settings, "UpAxisSign", 1); // TODO
+        Settings settings(findNodes(root, "GlobalSettings")[0]);
 
         const auto nodeObjects = findNodes(root, "Objects")[0];
         const auto nodeConnections = findNodes(root, "Connections")[0];
@@ -27,7 +24,7 @@ namespace FBX {
         std::vector<std::shared_ptr<Mesh>> meshes;
         for (const auto &node : nodeGeometry)
             if (std::get<std::string>(node.properties[2]) == "Mesh")
-                meshes.push_back(parseMesh(node, up));
+                meshes.push_back(parseMesh(node, {})); // TODO
 
         std::vector<std::shared_ptr<Model>> models;
         models.reserve(nodeModels.size());
@@ -55,10 +52,10 @@ namespace FBX {
                         model->mesh = mesh;
         }
 
-        return std::make_unique<Scene>(models, up);
+        return std::make_unique<Scene>(models, settings);
     }
 
-    std::shared_ptr<Mesh> Parser::parseMesh(const Node &node, const int32_t up) const {
+    std::shared_ptr<Mesh> Parser::parseMesh(const Node &node, const Vector3 up) const {
         std::shared_ptr<Mesh> mesh(new Mesh(node));
 
         if (processes & Process::TRIANGULATE)
@@ -67,7 +64,8 @@ namespace FBX {
         for (auto &vertex : mesh->vertices) {
             Vector3 v = vertex;
 
-            if (processes & MAKE_X_UP) {
+            // TODO
+            /*if (processes & MAKE_X_UP) {
                 if (up == 1)
                     v = Vector3(vertex.y, vertex.x, vertex.z);
                 else if (up == 2)
@@ -82,7 +80,7 @@ namespace FBX {
                     v = Vector3(vertex.z, vertex.y, vertex.x);
                 else if (up == 1)
                     v = Vector3(vertex.x, vertex.z, vertex.y);
-            }
+            }*/
 
             vertex = v;
         }

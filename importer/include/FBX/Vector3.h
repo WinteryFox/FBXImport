@@ -14,7 +14,7 @@ namespace FBX {
 
         explicit Vector3(float init) : x(init), y(init), z(init) {}
 
-        float operator[](uint8_t index) const {
+        float &operator[](uint8_t index) {
             if (index == 0)
                 return x;
             else if (index == 1)

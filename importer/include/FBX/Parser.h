@@ -6,7 +6,9 @@
 #include <iostream>
 #include <optional>
 #include <memory>
+
 #define _USE_MATH_DEFINES
+
 #include <cmath>
 #include "Node.h"
 #include "Mesh.h"
@@ -22,7 +24,7 @@ namespace FBX {
 
         [[nodiscard]] std::unique_ptr<const Scene> parseScene() const;
 
-        [[nodiscard]] std::shared_ptr<Mesh> parseMesh(const Node &node, int32_t up) const;
+        [[nodiscard]] std::shared_ptr<Mesh> parseMesh(const Node &node, Vector3 up) const;
 
         static bool onLeftSideOfLine(const Vector2 &a, const Vector2 &b, const Vector2 &c);
 

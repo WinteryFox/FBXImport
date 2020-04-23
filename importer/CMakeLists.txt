@@ -13,7 +13,14 @@ set(fbx_HEADERS
         include/FBX/Scene.h
         include/FBX/Vector3.h
         include/FBX/Face.h
-        include/FBX/Process.h include/FBX/Texture.h include/FBX/Material.h include/FBX/Util.h include/FBX/Object.h include/FBX/Model.h include/FBX/Vector2.h)
+        include/FBX/Process.h
+        include/FBX/Texture.h
+        include/FBX/Material.h
+        include/FBX/Util.h
+        include/FBX/Object.h
+        include/FBX/Model.h
+        include/FBX/Vector2.h
+        include/FBX/Settings.h)
 
 add_library(FBXImport SHARED ${fbx_SOURCES} ${fbx_HEADERS})
 

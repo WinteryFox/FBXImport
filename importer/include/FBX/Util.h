@@ -13,11 +13,26 @@ namespace FBX {
         return nodes;
     }
 
+    static Vector3 getProperty(const Node &node, const std::string &property, const Vector3 &fallback) {
+        const Node properties = findNodes(node, "Properties70")[0];
+
+        for (const auto &prop : properties.children)
+            if (std::get<std::string>(prop.properties[0]) == property)
+                return {
+                        static_cast<float>(std::get<double>(prop.properties[4])),
+                        static_cast<float>(std::get<double>(prop.properties[5])),
+                        static_cast<float>(std::get<double>(prop.properties[6]))
+                };
+        return fallback;
+    }
+
     template<class T>
-    static T getProperty(const Node &properties, const std::string &property, const T &fallback) {
-        for (const auto &node : properties.children)
-            if (std::get<std::string>(node.properties[0]) == property)
-                return std::get<T>(node.properties[4]);
+    static T getProperty(const Node &node, const std::string &property, const T &fallback) {
+        const Node properties = findNodes(node, "Properties70")[0];
+
+        for (const auto &prop : properties.children)
+            if (std::get<std::string>(prop.properties[0]) == property)
+                return std::get<T>(prop.properties[4]);
         return fallback;
     }
 
@@ -56,5 +71,11 @@ namespace FBX {
         }
 
         return result;
+    }
+
+    Vector3 parseAxis(uint32_t up, uint32_t sign) {
+        Vector3 res{};
+        res[up] = sign * 1.0f;
+        return res;
     }
 }
