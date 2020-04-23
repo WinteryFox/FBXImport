@@ -1,5 +1,4 @@
-#ifndef FBX_UTIL_H
-#define FBX_UTIL_H
+#pragma once
 
 #include <vector>
 #include "Node.h"
@@ -73,12 +72,4 @@ namespace FBX {
 
         return result;
     }
-
-    Vector3 parseAxis(uint32_t up, uint32_t sign) {
-        Vector3 res{};
-        res[up] = sign * 1.0f;
-        return res;
-    }
 }
-
-#endif
