@@ -4,7 +4,7 @@
 int main(int argc, char *argv[]) {
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    const auto &result = FBX::importFile("Cone.fbx", FBX::Process::TRIANGULATE | FBX::Process::MAKE_Y_UP);
+    const auto &result = FBX::importFile("Fox.fbx", FBX::Process::TRIANGULATE | FBX::Process::MAKE_Y_UP);
 
     for (const auto &face : result->models[0]->mesh->faces) {
         if (face.indices.size() != 3)

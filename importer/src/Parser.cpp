@@ -26,13 +26,14 @@ namespace FBX {
 
         std::vector<std::shared_ptr<Mesh>> meshes;
         for (const auto &node : nodeGeometry)
-            if (isMesh(node))
+            if (std::get<std::string>(node.properties[2]) == "Mesh")
                 meshes.push_back(parseMesh(node, up));
 
         std::vector<std::shared_ptr<Model>> models;
         models.reserve(nodeModels.size());
         for (const auto &node : nodeModels)
-            models.emplace_back(new Model(node));
+            if (std::get<std::string>(node.properties[2]) == "Mesh")
+                models.emplace_back(new Model(node));
 
         for (const auto &node : nodeConnections.children) {
             const auto source = std::get<int64_t>(node.properties[1]);
@@ -55,16 +56,6 @@ namespace FBX {
         }
 
         return std::make_unique<Scene>(models, up);
-    }
-
-    bool Parser::isMesh(const Node &node) {
-        for (const auto &property : node.properties) {
-            try {
-                if (std::get<std::string>(property) == "Mesh")
-                    return true;
-            } catch (std::bad_variant_access &ignored) {}
-        }
-        return false;
     }
 
     std::shared_ptr<Mesh> Parser::parseMesh(const Node &node, const int32_t up) const {
