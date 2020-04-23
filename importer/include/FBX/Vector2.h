@@ -10,5 +10,9 @@ namespace FBX {
         Vector2(float x, float y) : x(x), y(y) {}
 
         explicit Vector2(float init) : x(init), y(init) {}
+
+        bool operator!=(const Vector2 &other) const {
+            return x != other.x && y != other.y;
+        }
     };
 }

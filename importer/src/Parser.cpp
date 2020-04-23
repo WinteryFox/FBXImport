@@ -99,17 +99,12 @@ namespace FBX {
         return mesh;
     }
 
-    bool Parser::isCounterClockwise(const Vector2 &a, const Vector2 &b, const Vector2 &c) {
-        return (b.x - a.x) * (c.y - c.y) -
-               (b.x - b.x) * (b.y - c.y) > 0;
-    }
-
     void Parser::triangulate(const std::shared_ptr<Mesh> &mesh) {
         std::vector<Face> faces;
 
         for (auto &face : mesh->faces) {
             if (face.indices.size() <= 3) {
-                //faces.push_back(face);
+                faces.push_back(face);
             } else if (face.indices.size() == 4) {
                 uint32_t startVertex = 0;
                 for (uint32_t i = 0; i < 4; i++) {
@@ -129,7 +124,7 @@ namespace FBX {
                     }
                 }
 
-                /*faces.emplace_back(
+                faces.emplace_back(
                         std::vector<uint32_t>{
                                 face[startVertex],
                                 face[(startVertex + 1) % 4],
@@ -142,7 +137,7 @@ namespace FBX {
                                 face[(startVertex + 2) % 4],
                                 face[(startVertex + 3) % 4]
                         }
-                );*/
+                );
             } else {
                 std::vector<Vector3> vertices;
                 vertices.reserve(face.indices.size());
@@ -175,86 +170,67 @@ namespace FBX {
                 if (inv < 0.0f)
                     std::swap(ac, bc);
 
+                int num = face.indices.size(), ear = 0, tmp, prev = num - 1, next = 0, max = num;
+                std::vector<uint32_t> done;
                 std::vector<Vector2> vertices2D;
                 vertices2D.reserve(vertices.size());
-                for (auto i = 0; i < vertices.size() - 1; i++)
-                    vertices2D.emplace_back(vertices[i][ac], vertices[i][bc]);
-
-                uint32_t earIndex = 0;
-                Vector2 leftMost = vertices2D[0];
-                for (uint32_t i = 0; i < vertices2D.size() - 1; i++) {
-                    const auto vertex = vertices2D[i];
-                    if (vertex.x > leftMost.x || (vertex.x == leftMost.x && vertex.y < leftMost.y)) {
-                        leftMost = vertex;
-                        earIndex = i;
-                    }
+                for (tmp = 0; tmp < max; tmp++) {
+                    vertices2D.emplace_back(vertices[tmp][ac], vertices[tmp][bc]);
+                    done.push_back(false);
                 }
 
-                const auto tri = Face(
-                        std::vector<uint32_t>{
-                                static_cast<unsigned int>(earIndex != 0 ? earIndex - 1 : vertices2D.size() - 1),
-                                earIndex,
-                                earIndex + 1 < vertices2D.size() ? earIndex + 1 : 0
-                        }
-                );
-
-                uint32_t vertexCount = vertices2D.size();
-                std::vector<uint32_t> reflex;
-                int32_t earTip = -1;
-                while (vertexCount >= 3) {
-                    for (int32_t i = 0; i < vertices2D.size() - 1; i++) {
-                        if (earTip >= 0)
-                            break;
-
-                        Vector2 prev = vertices2D[i - 1 > 0 ? i - 1 : vertices2D.size() - 1];
-                        Vector2 current = vertices2D[i];
-                        Vector2 next = vertices2D[i + 1 < vertices2D.size() ? i + 1 : 0];
-
-                        if (isCounterClockwise(prev, current, next)) {
-                            reflex.push_back(i);
-                            continue;
-                        }
-
-                        bool ear = true;
-                        for (uint32_t index : reflex) {
-                            if (face[index] == tri[0] || face[index] == tri[2])
-                                continue;
-
-                            if (isInTriangle(vertices2D[face[index]], vertices2D[tri[0]], vertices2D[tri[1]], vertices2D[tri[2]])) {
-                                ear = false;
+                while (num > 3) {
+                    int numFound = 0;
+                    for (ear = next;; prev = ear, ear = next) {
+                        for (next = ear + 1; done[(next >= max ? next = 0 : next)]; next++);
+                        if (next < ear)
+                            if (++numFound == 2)
                                 break;
-                            }
+
+                        Vector2 pnt1 = vertices2D[ear], pnt0 = vertices2D[prev], pnt2 = vertices2D[next];
+
+                        if (onLeftSideOfLine(pnt0, pnt2, pnt1))
+                            continue;
+
+                        for (tmp = 0; tmp < max; tmp++) {
+                            const Vector2 vtmp = vertices2D[tmp];
+                            if (vtmp != pnt1 && vtmp != pnt2 && vtmp != pnt0 && isInTriangle(pnt0, pnt1, pnt2, vtmp))
+                                break;
                         }
 
-                        if (ear) {
-                            for (uint32_t j = i + 1; i < vertexCount - 1; i++) {
-                                if (face[j] == tri[0] || face[j] == tri[2])
-                                    continue;
+                        if (tmp != max)
+                            continue;
 
-                                if (isInTriangle(vertices2D[j], vertices2D[tri[0]], vertices2D[tri[1]],
-                                                 vertices2D[tri[2]])) {
-                                    ear = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (ear)
-                            earTip = i;
+                        break;
                     }
 
-                    if (earTip < 0)
+                    if (++numFound == 2) {
+                        num = 0;
                         break;
+                    }
 
-                    uint32_t prev = earTip - 1 >= 0 ? earTip - 1 : vertexCount - 1;
-                    uint32_t next = earTip + 1 < vertexCount ? earTip + 1 : 0;
                     faces.emplace_back(
                             std::vector<uint32_t>{
-                                    prev, static_cast<uint32_t>(earTip), next
+                                    static_cast<unsigned int>(face[prev]),
+                                    static_cast<unsigned int>(face[ear]),
+                                    static_cast<unsigned int>(face[next])
                             }
                     );
-                    std::erase(face.indices, earTip);
-                    vertexCount--;
+
+                    done[ear] = true;
+                    num--;
+                }
+
+                if (num > 0) {
+                    Face f{};
+                    for (tmp = 0; done[tmp]; tmp++)
+                        f.indices.push_back(face[tmp]);
+
+                    for (++tmp = 0; done[tmp]; tmp++)
+                        f.indices.push_back(face[tmp]);
+
+                    for (++tmp = 0; done[tmp]; tmp++)
+                        f.indices.push_back(face[tmp]);
                 }
             }
         }
@@ -273,5 +249,9 @@ namespace FBX {
         float gamma = 1.0f - alpha - beta;
 
         return !(alpha < 0 || beta < 0 || gamma < 0);
+    }
+
+    bool Parser::onLeftSideOfLine(const Vector2 &a, const Vector2 &b, const Vector2 &c) {
+        return 0.5f * (a.x * ((double) c.y - b.y) + b.x * ((double) a.y - c.y) + c.x * ((double) b.y - a.y)) > 0;
     }
 }
