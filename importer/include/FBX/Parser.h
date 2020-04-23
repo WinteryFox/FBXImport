@@ -24,8 +24,6 @@ namespace FBX {
 
         [[nodiscard]] std::shared_ptr<Mesh> parseMesh(const Node &node, int32_t up) const;
 
-        static bool isMesh(const Node &node);
-
         static bool onLeftSideOfLine(const Vector2 &a, const Vector2 &b, const Vector2 &c);
 
         static bool isInTriangle(const Vector2 &point, const Vector2 &a, const Vector2 &b, const Vector2 &c);

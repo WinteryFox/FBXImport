@@ -92,10 +92,12 @@ namespace FBX {
 
     void Parser::triangulate(const std::shared_ptr<Mesh> &mesh) {
         std::vector<Face> faces;
+        mesh->indexCount = 0;
 
         for (auto &face : mesh->faces) {
             if (face.indices.size() <= 3) {
                 faces.push_back(face);
+                mesh->indexCount += face.indices.size();
             } else if (face.indices.size() == 4) {
                 uint32_t startVertex = 0;
                 for (uint32_t i = 0; i < 4; i++) {
@@ -129,6 +131,7 @@ namespace FBX {
                                 face[(startVertex + 3) % 4]
                         }
                 );
+                mesh->indexCount += 6;
             } else {
                 std::vector<Vector3> vertices;
                 vertices.reserve(face.indices.size());
@@ -207,21 +210,24 @@ namespace FBX {
                                     static_cast<unsigned int>(face[next])
                             }
                     );
+                    mesh->indexCount += 3;
 
                     done[ear] = true;
                     num--;
                 }
 
                 if (num > 0) {
-                    Face f{};
+                    Face f{std::vector<uint32_t>(3)};
                     for (tmp = 0; done[tmp]; tmp++)
-                        f.indices.push_back(face[tmp]);
+                        f.indices[0] = face[tmp];
 
                     for (++tmp = 0; done[tmp]; tmp++)
-                        f.indices.push_back(face[tmp]);
+                        f.indices[1] = face[tmp];
 
                     for (++tmp = 0; done[tmp]; tmp++)
-                        f.indices.push_back(face[tmp]);
+                        f.indices[2] = face[tmp];
+                    faces.push_back(f);
+                    mesh->indexCount += 3;
                 }
             }
         }
