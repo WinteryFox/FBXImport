@@ -25,7 +25,10 @@ namespace FBX {
                   originalUnitScaleFactor(getProperty<double>(node, "OriginalUnitScaleFactor", 1.0)),
                   ambientColor(getProperty(node, "AmbientColor", {})) {}
 
-        Vector3 parseAxis(uint32_t up, uint32_t sign) {
+        static Vector3 parseAxis(int32_t up, int32_t sign) {
+            if (up < 0)
+                return {};
+
             Vector3 res{};
             res[up] = sign * 1.0f;
             return res;
