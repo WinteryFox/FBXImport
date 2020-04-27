@@ -4,7 +4,7 @@ A simple, easy-to-use and fast C++ library to open and read FBX binary files.
 ## Installation
 Simply add this project to your own, through [git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 or any other method. Then add `importer/include` to your included directories and add `FBXImport` to your
-linking process.
+linking process and include `FBX/FBXImport.h`.
 
 ```CMake
 add_subdirectory({CMAKE_CURRENT_SOURCE_DIR}/FBXImport)
@@ -19,6 +19,8 @@ target_include_directories(test PRIVATE {CMAKE_CURRENT_SOURCE_DIR}/FBXImport/imp
 
 ## Simple example
 ```C++
+#include <FBX/FBXImport.h>
+
 const auto &fbxScene = FBX::importFile(path, FBX::Process::TRIANGULATE); // Triangulate all models in the scene.
 for (const auto &fbxModel : fbxScene->models) {
     std::vector<glm::vec3> vertices;
