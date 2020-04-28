@@ -22,7 +22,7 @@ set(fbx_HEADERS
         include/FBX/Vector2.h
         include/FBX/Settings.h)
 
-add_library(FBXImport SHARED ${fbx_SOURCES} ${fbx_HEADERS})
+add_library(FBXImport ${fbx_SOURCES} ${fbx_HEADERS})
 
 if (FBX_BUILD_ZLIB)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/contrib/zlib)
