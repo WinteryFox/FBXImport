@@ -24,15 +24,9 @@ set(fbx_HEADERS
 
 add_library(FBXImport ${fbx_SOURCES} ${fbx_HEADERS})
 
-if (FBX_BUILD_ZLIB)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/contrib/zlib)
-    target_include_directories(FBXImport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/zlib)
-    target_link_libraries(FBXImport zlib)
-else (FBX_BUILD_ZLIB)
-    find_package(ZLIB REQUIRED)
-    target_include_directories(FBXImport PUBLIC ${ZLIB_INCLUDE_DIRS})
-    target_link_libraries(FBXImport ZLIB::ZLIB)
-endif (FBX_BUILD_ZLIB)
+find_package(ZLIB REQUIRED)
+target_include_directories(FBXImport PUBLIC ${ZLIB_INCLUDE_DIRS})
+target_link_libraries(FBXImport ZLIB::ZLIB)
 
 set_target_properties(
         FBXImport PROPERTIES
