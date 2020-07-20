@@ -3,7 +3,8 @@ A simple, easy-to-use and fast C++ library to open and read FBX binary files.
 
 ## Installation
 Simply add this project to your own, through [git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
-or any other method. Then add `importer/include` to your included directories and add `FBXImport` to your
+or by installing the project on your machine and using the [provided find_package script](https://github.com/WinteryFox/FBXImport/blob/master/cmake/FindFBXImport.cmake).
+Then add `importer/include` to your included directories and add `FBXImport` to your
 linking process and include `FBX/FBXImport.h`.
 
 ```CMake
