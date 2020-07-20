@@ -22,6 +22,7 @@ target_include_directories(test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/FBXImport/im
 Loading a model from a file is as easy as including `FBX/FBXImport.h` and calling `FBX::importFile`.
 ```C++
 #include <FBX/FBXImport.h>
+#include <FBX/TriangulateProcess.h>
 
 const auto &result = FBX::importFile(path, std::set<FBX::Process*>{new FBX::TriangulateProcess()});
 ```
@@ -29,6 +30,7 @@ const auto &result = FBX::importFile(path, std::set<FBX::Process*>{new FBX::Tria
 ## Example using GLM
 ```C++
 #include <FBX/FBXImport.h>
+#include <FBX/TriangulateProcess.h>
 #include <glm/glm.hpp>
 
 const auto &result = FBX::importFile(path, std::set<FBX::Process*>{new FBX::TriangulateProcess()}); // Triangulate all models in the scene.
