@@ -1,7 +1,8 @@
 set(fbx_SOURCES
         src/Decoder.cpp
         src/Parser.cpp
-        src/Stream.cpp)
+        src/Stream.cpp
+        src/TriangulateProcess.cpp)
 set(fbx_HEADERS
         include/FBX/Decoder.h
         include/FBX/Node.h

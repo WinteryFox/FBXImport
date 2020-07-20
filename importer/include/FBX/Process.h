@@ -1,7 +1,12 @@
 #pragma once
 
+#include "Mesh.h"
+#include <memory>
+
 namespace FBX {
-    enum Process {
-        TRIANGULATE = 0x001,
+    struct Process {
+        virtual ~Process() {};
+
+        virtual void execute(const std::shared_ptr<Mesh> &mesh) = 0;
     };
 }

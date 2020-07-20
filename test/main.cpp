@@ -1,10 +1,11 @@
 #include <FBX/FBXImport.h>
+#include <FBX/TriangulateProcess.h>
 #include <chrono>
 
 int main(int argc, char *argv[]) {
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    const auto &result = FBX::importFile("Fox.fbx", FBX::Process::TRIANGULATE);
+    const auto &result = FBX::importFile("Fox.fbx", std::set<FBX::Process*>{new FBX::TriangulateProcess()});
 
     for (const auto &face : result->models[0]->mesh->faces)
         if (face.indices.size() != 3)

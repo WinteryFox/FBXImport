@@ -1,6 +1,7 @@
-#include <cmath>
-
 #pragma once
+
+#include <stdexcept>
+#include <cmath>
 
 namespace FBX {
     struct Vector3 {
@@ -14,7 +15,7 @@ namespace FBX {
 
         explicit Vector3(float init) : x(init), y(init), z(init) {}
 
-        float &operator[](uint8_t index) {
+        float &operator[](int index) {
             if (index == 0)
                 return x;
             else if (index == 1)

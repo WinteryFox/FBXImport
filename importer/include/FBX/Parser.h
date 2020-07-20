@@ -10,6 +10,7 @@
 #define _USE_MATH_DEFINES
 
 #include <cmath>
+#include <set>
 #include "Node.h"
 #include "Mesh.h"
 #include "Scene.h"
@@ -20,20 +21,16 @@
 
 namespace FBX {
     struct Parser {
-        explicit Parser(const Node &root, int processes) : root(root), processes(processes) {}
+        explicit Parser(const Node &root, const std::set<Process*> processes) : root(root), processes(processes) {}
+
+        ~Parser();
 
         [[nodiscard]] std::unique_ptr<const Scene> parseScene() const;
 
         [[nodiscard]] std::shared_ptr<Mesh> parseMesh(const Node &node, Vector3 up) const;
 
-        static bool onLeftSideOfLine(const Vector2 &a, const Vector2 &b, const Vector2 &c);
-
-        static bool isInTriangle(const Vector2 &point, const Vector2 &a, const Vector2 &b, const Vector2 &c);
-
-        static void triangulate(const std::shared_ptr<Mesh> &mesh);
-
     private:
         const Node &root;
-        int processes;
+        const std::set<Process*> processes;
     };
 }
