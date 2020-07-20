@@ -23,7 +23,7 @@ Loading a model from a file is as easy as including `FBX/FBXImport.h` and callin
 ```C++
 #include <FBX/FBXImport.h>
 
-const auto &fbxScene = FBX::importFile(path, FBX::Process::TRIANGULATE);
+const auto &result = FBX::importFile(path, std::set<FBX::Process*>{new FBX::TriangulateProcess()});
 ```
 
 ## Example using GLM
@@ -31,7 +31,7 @@ const auto &fbxScene = FBX::importFile(path, FBX::Process::TRIANGULATE);
 #include <FBX/FBXImport.h>
 #include <glm/glm.hpp>
 
-const auto &fbxScene = FBX::importFile(path, FBX::Process::TRIANGULATE); // Triangulate all models in the scene.
+const auto &result = FBX::importFile(path, std::set<FBX::Process*>{new FBX::TriangulateProcess()}); // Triangulate all models in the scene.
 for (const auto &fbxModel : fbxScene->models) {
     std::vector<glm::vec3> vertices;
     std::vector<uint32_t> indices;
@@ -57,3 +57,11 @@ for (const auto &fbxModel : fbxScene->models) {
         uvs.emplace_back(uv.x, 1.0f - uv.y); // Flip Y-coordinate for usage in Vulkan.
 }
 ```
+
+## Creating your own processes
+You can create and apply your own processes by extending from `FBX/Process.h` and adding it to the set of processes in your `FBX::importFile` call.
+For example, after creating a process called `MyProcess` you would call  
+```C++
+FBX::importFile(path, std::set<Process*>{new MyProcess()});
+```
+which will apply the process `MyProcess` on every mesh in the file.
