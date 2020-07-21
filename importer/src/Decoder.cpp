@@ -95,6 +95,9 @@ namespace FBX {
 
                 size_t have = FBX_CHUNK - infstream.avail_out;
                 size_t size = buffer.size() * sizeof(T);
+
+                assert(toConsume <= have); // TODO: Fix buffer overflow for large chunks to inflate
+
                 buffer.resize(buffer.size() + have / sizeof(T));
                 std::memcpy(buffer.data() + size, out.data(), have);
             } while (infstream.avail_out == 0);

@@ -11,7 +11,7 @@
 #include "Node.h"
 #include "Stream.h"
 
-#define FBX_CHUNK 256000
+const inline uint32_t FBX_CHUNK = 1000000;
 
 namespace FBX {
     struct Decoder {
