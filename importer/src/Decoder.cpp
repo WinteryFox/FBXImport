@@ -42,9 +42,9 @@ namespace FBX {
 
     template<class T>
     std::vector<T> Decoder::readArray() {
-        size_t arraySize = readuInt();
-        size_t encoding = readuInt();
-        size_t completeLength = readuInt();
+        size_t arraySize = stream.read<std::uint32_t>();
+        size_t encoding = stream.read<std::uint32_t>();
+        size_t completeLength = stream.read<std::uint32_t>();
 
         std::vector<T> buffer;
         if (encoding == 1)
